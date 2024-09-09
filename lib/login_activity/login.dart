@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -34,23 +35,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);
-      if (responseData['loginSuccess']) {
-        // 로그인 성공
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('성공'),
-            content: Text('로그인 성공!'),
-            actions: [
-              TextButton(
-                child: Text('확인'),
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/main');
-                },
-              ),
-            ],
-          ),
-        );
+
+      // 서버 응답 데이터에서 필요한 값 추출 (null 체크 추가)
+      final loginSuccess = responseData['loginSuccess'] ?? false;
+      final userId = responseData['userId'] ?? '';
+      final token = responseData['token'] ?? '';
+
+      if (loginSuccess) {
+        // 로그인 성공 시 SharedPreferences에 저장
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userId', userId);
+        await prefs.setString('token', token); // 서버에서 반환한 토큰을 저장
+        await prefs.setBool('isLoggedIn', true); // 로그인 상태 플래그 저장
+
+        // 로그인 성공 후 메인 화면으로 이동
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       } else {
         // 로그인 실패
         showDialog(
