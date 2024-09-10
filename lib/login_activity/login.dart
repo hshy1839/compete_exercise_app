@@ -38,18 +38,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // 서버 응답 데이터에서 필요한 값 추출 (null 체크 추가)
       final loginSuccess = responseData['loginSuccess'] ?? false;
-      final userId = responseData['userId'] ?? '';
       final token = responseData['token'] ?? '';
 
       if (loginSuccess) {
-        // 로그인 성공 시 SharedPreferences에 저장
+        // 로그인 성공 시 SharedPreferences에 JWT 저장
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userId', userId);
-        await prefs.setString('token', token); // 서버에서 반환한 토큰을 저장
+        await prefs.setString('token', token);
         await prefs.setBool('isLoggedIn', true); // 로그인 상태 플래그 저장
 
-        // 로그인 성공 후 메인 화면으로 이동
-        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        // 로그인 성공 다이얼로그 표시
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('성공'),
+            content: Text('로그인 성공!'),
+            actions: [
+              TextButton(
+                child: Text('확인'),
+                onPressed: () {
+                  // 메인 화면으로 이동하고 이전 모든 화면 제거
+                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                },
+              ),
+            ],
+          ),
+        );
       } else {
         // 로그인 실패
         showDialog(
@@ -128,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/signup1');
+                Navigator.pushNamed(context, '/signup');
               },
               child: Text('회원가입'),
             ),

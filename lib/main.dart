@@ -6,8 +6,7 @@ import 'add_screen.dart';
 import 'profile_screen.dart';
 import 'footer.dart';
 import 'login_activity/login.dart'; // 로그인 화면 import
-import 'login_activity/signup1.dart'; // 회원가입1 페이지 import
-import 'login_activity/signup2.dart'; // 회원가입2 페이지 import
+import 'login_activity/signup.dart'; // 회원가입1 페이지 import
 
 void main() {
   runApp(MyApp());
@@ -21,11 +20,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainScreenWithFooter(),
+      home: MainScreenWithFooter(), // 로그인 여부에 관계없이 항상 MainScreenWithFooter 표시
       routes: {
         '/login': (context) => LoginScreen(),
-        '/signup1': (context) => Signup1Screen(),
-        '/signup2': (context) => Signup2Screen(),
+        '/signup': (context) => SignupScreen(),
         '/profile': (context) => ProfileScreen(),
         '/add_plan': (context) => AddScreen(),
       },
@@ -55,13 +53,11 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
       final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
       if (isLoggedIn) {
-        // 로그인이 되어 있으면 ProfileScreen으로 이동 (현재 페이지를 업데이트)
         setState(() {
           _currentIndex = index;
         });
         _pageController.jumpToPage(index);
       } else {
-        // 로그인이 되어 있지 않으면 LoginScreen으로 이동
         Navigator.pushReplacementNamed(context, '/login');
       }
     } else {
