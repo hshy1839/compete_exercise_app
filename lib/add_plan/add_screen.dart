@@ -35,7 +35,9 @@ class _AddScreenState extends State<AddScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/add_exercise_list');
+                    Navigator.pushReplacementNamed(context,
+                        '/add_exercise_list',
+                        arguments: _selectedDate);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../header.dart'; // Ensure to import the Header widget
 
 class AddPlanning extends StatefulWidget {
@@ -14,6 +17,20 @@ class _AddPlanningState extends State<AddPlanning> {
 
   TimeOfDay _startTime = TimeOfDay.now();
   TimeOfDay _endTime = TimeOfDay.now();
+
+  DateTime? _selectedDate;
+  String? _exerciseType;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Retrieve arguments safely in didChangeDependencies
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    if (arguments != null) {
+      _selectedDate = arguments['date'];
+      _exerciseType = arguments['exercise'];
+    }
+  }
 
   Future<void> _selectTime(BuildContext context, bool isStartTime) async {
     final TimeOfDay? selectedTime = await showTimePicker(
@@ -40,6 +57,60 @@ class _AddPlanningState extends State<AddPlanning> {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
+  Future<void> _submitPlanning() async {
+    final url = 'http://localhost:8864/api/users/planning'; // Replace with your server URL
+
+    // Get JWT token from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token', // Add token to Authorization header
+    };
+
+    final body = jsonEncode({
+      'selected_date': _selectedDate?.toIso8601String(),
+      'selected_exercise': _exerciseType,
+      'selected_participants': _participantsController.text,
+      'selected_startTime': _startTimeController.text,
+      'selected_endTime': _endTimeController.text,
+      'selected_location': _locationController.text,
+    });
+
+    try {
+      final response = await http.post(Uri.parse(url), headers: headers, body: body);
+      if (response.statusCode == 200) {
+        // Handle successful response
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('성공'),
+            content: Text('계획이 저장되었습니다!'),
+            actions: [
+              TextButton(
+                child: Text('확인'),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                },
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Handle error response
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit planning')),
+        );
+      }
+    } catch (e) {
+      // Handle network or other errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,6 +126,16 @@ class _AddPlanningState extends State<AddPlanning> {
             Text(
               'Plan Your Exercise',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Selected Date: ${_selectedDate?.toLocal().toString().split(' ')[0] ?? 'N/A'}',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Exercise Type: ${_exerciseType ?? 'N/A'}',
+              style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 20),
             Text(
@@ -113,10 +194,7 @@ class _AddPlanningState extends State<AddPlanning> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Handle form submission
-                Navigator.pushReplacementNamed(context, '/add_planning');
-              },
+              onPressed: _submitPlanning,
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 50), // Make button width full width
                 shape: RoundedRectangleBorder(
