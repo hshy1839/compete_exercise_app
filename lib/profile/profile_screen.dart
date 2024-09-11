@@ -45,6 +45,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushNamed(context, '/edit_profile'); // 프로필 수정 페이지로 이동
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', false); // 로그아웃 처리
+    Navigator.pushReplacementNamed(context, '/login'); // 로그인 화면으로 이동
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,14 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Text(
                         _nickname,
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(width: 10),
-                      IconButton(
-                        icon: Icon(Icons.edit_document),
-                        onPressed: _navigateToEditProfile,
-                        iconSize: 15, // 아이콘 크기
-                        padding: EdgeInsets.zero, // 패딩 제거
-                        constraints: BoxConstraints(), // 제약 조건 제거
                       ),
                     ],
                   ),
@@ -122,6 +120,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   Text('Following'),
                 ],
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          // 프로필 수정 및 로그아웃 버튼 추가
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: ElevatedButton(
+                  onPressed: _navigateToEditProfile,
+                  child: Text('Edit Profile'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue, // 버튼 배경 색상
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0), // 사각형 버튼의 모서리 반경
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 16.0), // 버튼의 상하 패딩
+                  ),
+                ),
+              ),
+              SizedBox(width: 20), // 버튼 사이 마진
+              Container(
+                width: 120,
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: ElevatedButton(
+                  onPressed: _logout,
+                  child: Text('Logout'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red, // 버튼 배경 색상
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0), // 사각형 버튼의 모서리 반경
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 16.0), // 버튼의 상하 패딩
+                  ),
+                ),
               ),
             ],
           ),

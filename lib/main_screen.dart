@@ -11,11 +11,38 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<Map<String, dynamic>> exercisePlans = [];
+  String? currentUserNickname;
 
   @override
   void initState() {
     super.initState();
+    _fetchUserInfo();
     _fetchExercisePlans();
+  }
+
+  Future<void> _fetchUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8864/api/users/userinfo'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          currentUserNickname = data['nickname']; // 로그인한 사용자의 닉네임 설정
+        });
+      } else {
+        print('Failed to load user info. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching user info: $e');
+    }
   }
 
   Future<void> _fetchExercisePlans() async {
@@ -34,17 +61,19 @@ class _MainScreenState extends State<MainScreen> {
         final data = jsonDecode(response.body);
         final plans = data['plans'] as List;
 
+
         setState(() {
           exercisePlans = plans.map((plan) {
             return {
-              'username': plan['username'] ?? 'Unknown User',
+              'id': plan['_id'] ?? '', // 계획 ID 추가
+              'nickname': plan['nickname'] ?? 'Unknown User',
               'selected_date': plan['selected_date'] ?? 'Unknown Date',
               'selected_exercise': plan['selected_exercise'] ?? 'Unknown Exercise',
               'selected_participants': plan['selected_participants'] ?? 'Unknown Participants',
               'selected_startTime': plan['selected_startTime'] ?? 'Unknown Start Time',
               'selected_endTime': plan['selected_endTime'] ?? 'Unknown End Time',
               'selected_location': plan['selected_location'] ?? 'Unknown Location',
-              // 'profilePic': 'https://example.com/profile.jpg', // 프로필 사진 URL을 필요에 따라 조정
+              'profilePic': plan['profilePic'] ?? '', // 프로필 사진 추가
             };
           }).toList();
         });
@@ -61,61 +90,136 @@ class _MainScreenState extends State<MainScreen> {
     await _fetchExercisePlans();
   }
 
-  Future<void> _logout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', false); // 로그아웃 처리
+  Future<void> _deleteExercisePlan(String planId) async {
+    if (planId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('삭제할 계획이 없습니다.')),
+      );
+      return;
+    }
 
-    Navigator.pushReplacementNamed(context, '/login'); // 로그인 화면으로 이동
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:8864/api/users/planning/$planId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          exercisePlans.removeWhere((plan) => plan['id'] == planId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('운동 계획이 삭제되었습니다.')),
+        );
+      } else {
+        print('Failed to delete exercise plan. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error deleting exercise plan: $e');
+    }
+  }
+
+
+  void _confirmDelete(String planId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('삭제 확인'),
+        content: Text('계획을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+            },
+            child: Text('아니요'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              _deleteExercisePlan(planId); // 삭제 요청
+            },
+            child: Text('예'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: _refresh, // 새로 고침 기능
+        onRefresh: _refresh,
         child: Column(
           children: [
-            // 사용자 정의 Header 위젯을 상단에 배치
             Header(),
             Expanded(
               child: ListView.builder(
                 itemCount: exercisePlans.length,
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
+                  final isCurrentUserPlan = currentUserNickname == plan['nickname'];
+
                   return Card(
                     margin: EdgeInsets.all(8.0),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(16.0),
-                      leading: CircleAvatar(
-                        // 프로필 사진 URL이 필요하면 여기에 설정
-                        backgroundImage: NetworkImage(plan['profilePic'] ?? ''),
-                        radius: 24,
-                      ),
-                      title: Text('${plan['username']}님의 운동 계획'), // 사용자 이름 표시
-                      subtitle: Column(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: NetworkImage(plan['profilePic'] ?? ''),
+                                radius: 24,
+                              ),
+                              SizedBox(width: 10),
+                              Text('${plan['nickname']}님의 운동 계획'),
+                            ],
+                          ),
+                          SizedBox(height: 8),
                           Text('날짜: ${plan['selected_date']}'),
                           Text('운동: ${plan['selected_exercise']}'),
                           Text('참가자: ${plan['selected_participants']}명'),
                           Text('시작 시간: ${plan['selected_startTime']}'),
                           Text('종료 시간: ${plan['selected_endTime']}'),
                           Text('장소: ${plan['selected_location']}'),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    print('참여하기 버튼 클릭됨');
+                                  },
+                                  child: Text('참여 신청'),
+                                ),
+                                SizedBox(height: 8),
+                                if (isCurrentUserPlan)
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      _confirmDelete(plan['id']); // plan['id'] 전달
+                                    },
+                                    child: Text('삭제하기'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      isThreeLine: true,
-                      trailing: Icon(Icons.more_vert),
-                      // 오른쪽 끝에 더보기 아이콘 추가
                     ),
                   );
                 },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () => _logout(context),
-                child: Text('로그아웃'),
               ),
             ),
           ],

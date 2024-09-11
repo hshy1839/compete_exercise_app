@@ -16,7 +16,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneNumberController = TextEditingController();
-  final _nicknameController = TextEditingController(); // Add this line
+  final _nicknameController = TextEditingController();
+
+  String? _errorMessage; // 에러 메시지를 저장할 변수 추가
 
   @override
   void dispose() {
@@ -26,7 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneNumberController.dispose();
-    _nicknameController.dispose(); // Add this line
+    _nicknameController.dispose();
     super.dispose();
   }
 
@@ -43,7 +45,7 @@ class _SignupScreenState extends State<SignupScreen> {
           'birthdate': _birthdateController.text,
           'password': _passwordController.text,
           'phoneNumber': _phoneNumberController.text,
-          'nickname': _nicknameController.text, // Add this line
+          'nickname': _nicknameController.text,
         }),
       );
 
@@ -61,12 +63,12 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('회원가입 성공')),
         );
-        // 회원가입 성공 후, 로그인 화면으로 이동하거나 다른 작업을 수행할 수 있습니다.
-        Navigator.pop(context); // 예를 들어 로그인 화면으로 돌아가게 하거나
+        Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('회원가입 실패')),
-        );
+        final responseData = jsonDecode(response.body);
+        setState(() {
+          _errorMessage = responseData['message'] ?? '회원가입 실패'; // 서버에서 받은 에러 메시지 설정
+        });
       }
     }
   }
@@ -153,7 +155,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               TextFormField(
                 controller: _nicknameController,
-                decoration: InputDecoration(labelText: 'Nickname'), // Add this field
+                decoration: InputDecoration(labelText: 'Nickname'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a nickname';
@@ -161,6 +163,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   return null;
                 },
               ),
+              if (_errorMessage != null) // 에러 메시지가 있을 경우에만 표시
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red), // 빨간 글자 스타일
+                  ),
+                ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submitData,
