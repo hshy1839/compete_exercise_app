@@ -13,12 +13,10 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Main Screen'),
-        // 헤더 관련 코드가 있을 경우 추가
-      ),
       body: Column(
         children: [
+          // 사용자 정의 Header 위젯을 상단에 배치
+          Header(),
           Expanded(
             child: Center(
               child: Text('Main Screen Content'),

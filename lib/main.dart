@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:quest/add_plan/add_planning.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main_screen.dart';
 import 'search_screen.dart';
-import 'add_screen.dart';
+import 'add_plan/add_screen.dart';
 import 'profile_screen.dart';
 import 'footer.dart';
 import 'login_activity/login.dart'; // 로그인 화면 import
 import 'login_activity/signup.dart'; // 회원가입1 페이지 import
+import 'add_plan/add_exercise_list.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  get url => null;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -25,7 +29,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
         '/profile': (context) => ProfileScreen(),
-        '/add_plan': (context) => AddScreen(),
+        '/add_screen': (context) => AddScreen(),
+        '/add_exercise_list': (context) => AddExerciseList(),
+        '/add_planning': (context) => AddPlanning(),
       },
     );
   }
@@ -45,6 +51,9 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
     SearchScreen(),
     AddScreen(),
     ProfileScreen(),
+    AddExerciseList(),
+    LoginScreen(),
+    SignupScreen(),
   ];
 
   Future<void> _onTabTapped(int index) async {
