@@ -8,29 +8,42 @@ class Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
+      color: Colors.black, // Footer 배경 색상 설정
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            icon: Icon(Icons.home),
+            icon: Icon(
+              Icons.home,
+              color: Colors.white, // 아이콘 색상 설정
+            ),
             onPressed: () {
               onTabTapped(0);
             },
           ),
           IconButton(
-            icon: Icon(Icons.search),
+            icon: Icon(
+              Icons.search,
+              color: Colors.white, // 아이콘 색상 설정
+            ),
             onPressed: () {
               onTabTapped(1);
             },
           ),
           IconButton(
-            icon: Icon(Icons.add),
+            icon: Icon(
+              Icons.add,
+              color: Colors.white, // 아이콘 색상 설정
+            ),
             onPressed: () {
               onTabTapped(2);
             },
           ),
           IconButton(
-            icon: Icon(Icons.person),
+            icon: Icon(
+              Icons.person,
+              color: Colors.white, // 아이콘 색상 설정
+            ),
             onPressed: () {
               onTabTapped(3);
             },

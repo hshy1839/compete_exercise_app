@@ -61,7 +61,6 @@ class _MainScreenState extends State<MainScreen> {
         final data = jsonDecode(response.body);
         final plans = data['plans'] as List;
 
-
         setState(() {
           exercisePlans = plans.map((plan) {
             return {
@@ -125,26 +124,25 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
   void _confirmDelete(String planId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('삭제 확인'),
-        content: Text('계획을 삭제하시겠습니까?'),
+        title: Text('삭제 확인', style: TextStyle(color: Colors.white)),
+        content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.white)),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // 다이얼로그 닫기
             },
-            child: Text('아니요'),
+            child: Text('아니요', style: TextStyle(color: Colors.white)),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // 다이얼로그 닫기
               _deleteExercisePlan(planId); // 삭제 요청
             },
-            child: Text('예'),
+            child: Text('예', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -154,11 +152,12 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // 전체 배경 색상 설정
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: Column(
           children: [
-            Header(),
+            Header(), // Header 위젯 추가
             Expanded(
               child: ListView.builder(
                 itemCount: exercisePlans.length,
@@ -167,6 +166,7 @@ class _MainScreenState extends State<MainScreen> {
                   final isCurrentUserPlan = currentUserNickname == plan['nickname'];
 
                   return Card(
+                    color: Colors.grey[900], // 리스트 아이템 배경 색상 설정
                     margin: EdgeInsets.all(8.0),
                     child: Padding(
                       padding: EdgeInsets.all(16.0),
@@ -180,16 +180,37 @@ class _MainScreenState extends State<MainScreen> {
                                 radius: 24,
                               ),
                               SizedBox(width: 10),
-                              Text('${plan['nickname']}님의 운동 계획'),
+                              Text(
+                                '${plan['nickname']}님의 운동 계획',
+                                style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                              ),
                             ],
                           ),
                           SizedBox(height: 8),
-                          Text('날짜: ${plan['selected_date']}'),
-                          Text('운동: ${plan['selected_exercise']}'),
-                          Text('참가자: ${plan['selected_participants']}명'),
-                          Text('시작 시간: ${plan['selected_startTime']}'),
-                          Text('종료 시간: ${plan['selected_endTime']}'),
-                          Text('장소: ${plan['selected_location']}'),
+                          Text(
+                            '날짜: ${plan['selected_date']}',
+                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                          ),
+                          Text(
+                            '운동: ${plan['selected_exercise']}',
+                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                          ),
+                          Text(
+                            '참가자: ${plan['selected_participants']}명',
+                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                          ),
+                          Text(
+                            '시작 시간: ${plan['selected_startTime']}',
+                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                          ),
+                          Text(
+                            '종료 시간: ${plan['selected_endTime']}',
+                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                          ),
+                          Text(
+                            '장소: ${plan['selected_location']}',
+                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                          ),
                           Align(
                             alignment: Alignment.bottomRight,
                             child: Column(
@@ -200,6 +221,9 @@ class _MainScreenState extends State<MainScreen> {
                                     print('참여하기 버튼 클릭됨');
                                   },
                                   child: Text('참여 신청'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white, // 버튼 배경 색상 설정
+                                  ),
                                 ),
                                 SizedBox(height: 8),
                                 if (isCurrentUserPlan)
@@ -209,7 +233,7 @@ class _MainScreenState extends State<MainScreen> {
                                     },
                                     child: Text('삭제하기'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: Colors.red, // 버튼 배경 색상 설정
                                     ),
                                   ),
                               ],

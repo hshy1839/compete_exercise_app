@@ -104,8 +104,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Login'),
+        title: Text('Login', style: TextStyle(color: Colors.white),),
+        backgroundColor: Colors.black,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -114,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Text(
               'Login Screen',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             SizedBox(height: 20),
             TextField(
@@ -136,14 +138,14 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _login,
-              child: Text('로그인'),
+              child: Text('로그인', style: TextStyle(color: Colors.black),),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/signup');
               },
-              child: Text('회원가입'),
+              child: Text('회원가입', style: TextStyle(color: Colors.black),),
             ),
           ],
         ),

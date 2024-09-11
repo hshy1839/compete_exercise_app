@@ -54,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0),
         child: Header(),
@@ -80,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Text(
                         _nickname,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ],
                   ),
@@ -96,9 +97,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     '12', // 하드코딩된 게시물 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
                   ),
-                  Text('Posts'),
+                  Text('Posts',
+                    style: TextStyle(color: Colors.white,)),
                 ],
               ),
               SizedBox(width: 40),
@@ -106,9 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     '10k', // 하드코딩된 팔로워 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
                   ),
-                  Text('Followers'),
+                  Text('Followers',
+                      style: TextStyle(color: Colors.white,)),
                 ],
               ),
               SizedBox(width: 40),
@@ -116,9 +119,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     '180', // 하드코딩된 팔로잉 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
                   ),
-                  Text('Following'),
+                  Text('Following',
+                  style: TextStyle(color: Colors.white,)),
                 ],
               ),
             ],
@@ -133,7 +137,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: ElevatedButton(
                   onPressed: _navigateToEditProfile,
-                  child: Text('Edit Profile'),
+                  child: Text('Edit Profile',
+                    style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue, // 버튼 배경 색상
                     shape: RoundedRectangleBorder(
@@ -149,7 +154,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: ElevatedButton(
                   onPressed: _logout,
-                  child: Text('Logout'),
+                  child: Text('Logout',
+                  style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red, // 버튼 배경 색상
                     shape: RoundedRectangleBorder(
