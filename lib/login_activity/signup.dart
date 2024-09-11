@@ -16,6 +16,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneNumberController = TextEditingController();
+  final _nicknameController = TextEditingController(); // Add this line
 
   @override
   void dispose() {
@@ -25,6 +26,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneNumberController.dispose();
+    _nicknameController.dispose(); // Add this line
     super.dispose();
   }
 
@@ -41,6 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
           'birthdate': _birthdateController.text,
           'password': _passwordController.text,
           'phoneNumber': _phoneNumberController.text,
+          'nickname': _nicknameController.text, // Add this line
         }),
       );
 
@@ -144,6 +147,16 @@ class _SignupScreenState extends State<SignupScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your phone number';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _nicknameController,
+                decoration: InputDecoration(labelText: 'Nickname'), // Add this field
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a nickname';
                   }
                   return null;
                 },

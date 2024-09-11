@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'header.dart';
+import '../header.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -10,7 +10,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _username = 'Loading...';
+  String _nickname = 'Loading...';
 
   @override
   void initState() {
@@ -32,13 +32,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);
       setState(() {
-        _username = responseData['username'] ?? 'Unknown User';
+        _nickname = responseData['nickname'] ?? 'Unknown User';
       });
     } else {
       setState(() {
-        _username = 'Error fetching user info';
+        _nickname = 'Error fetching user info';
       });
     }
+  }
+
+  void _navigateToEditProfile() {
+    Navigator.pushNamed(context, '/edit_profile'); // 프로필 수정 페이지로 이동
   }
 
   @override
@@ -65,9 +69,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    _username,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _nickname,
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 10),
+                      IconButton(
+                        icon: Icon(Icons.edit_document),
+                        onPressed: _navigateToEditProfile,
+                        iconSize: 15, // 아이콘 크기
+                        padding: EdgeInsets.zero, // 패딩 제거
+                        constraints: BoxConstraints(), // 제약 조건 제거
+                      ),
+                    ],
                   ),
                 ],
               ),

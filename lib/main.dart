@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'main_screen.dart';
 import 'search_screen.dart';
 import 'add_plan/add_screen.dart';
-import 'profile_screen.dart';
+import 'profile/profile_screen.dart';
+import 'profile/edit_profile.dart';
 import 'footer.dart';
 import 'login_activity/login.dart'; // 로그인 화면 import
 import 'login_activity/signup.dart'; // 회원가입1 페이지 import
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
         '/add_screen': (context) => AddScreen(),
         '/add_exercise_list': (context) => AddExerciseList(),
         '/add_planning': (context) => AddPlanning(),
+        '/edit_profile': (context) => EditProfile(),
       },
     );
   }
@@ -54,6 +56,7 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
     AddExerciseList(),
     LoginScreen(),
     SignupScreen(),
+    EditProfile(),
   ];
 
   Future<void> _onTabTapped(int index) async {
