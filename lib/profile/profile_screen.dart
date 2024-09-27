@@ -11,6 +11,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String _nickname = 'Loading...';
+  int _postCount = 0; // 게시물 수
+  int _followersCount = 0; // 팔로워 수
+  int _followingCount = 0; // 팔로잉 수
 
   @override
   void initState() {
@@ -33,6 +36,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final responseData = jsonDecode(response.body);
       setState(() {
         _nickname = responseData['nickname'] ?? 'Unknown User';
+        _postCount = responseData['postCount'] ?? 0; // 게시물 수
+        _followersCount = responseData['followersCount'] ?? 0; // 팔로워 수
+        _followingCount = responseData['followingCount'] ?? 0; // 팔로잉 수
       });
     } else {
       setState(() {
@@ -96,18 +102,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 children: [
                   Text(
-                    '12', // 하드코딩된 게시물 수
+                    _postCount.toString(), // 게시물 수
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
                   ),
                   Text('Posts',
-                    style: TextStyle(color: Colors.white,)),
+                      style: TextStyle(color: Colors.white,)),
                 ],
               ),
               SizedBox(width: 40),
               Column(
                 children: [
                   Text(
-                    '10k', // 하드코딩된 팔로워 수
+                    _followersCount.toString(), // 팔로워 수
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
                   ),
                   Text('Followers',
@@ -118,11 +124,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 children: [
                   Text(
-                    '180', // 하드코딩된 팔로잉 수
+                    _followingCount.toString(), // 팔로잉 수
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
                   ),
                   Text('Following',
-                  style: TextStyle(color: Colors.white,)),
+                      style: TextStyle(color: Colors.white,)),
                 ],
               ),
             ],
@@ -155,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton(
                   onPressed: _logout,
                   child: Text('Logout',
-                  style: TextStyle(color: Colors.white),),
+                    style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red, // 버튼 배경 색상
                     shape: RoundedRectangleBorder(
