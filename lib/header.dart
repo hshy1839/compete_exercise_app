@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import './direct_message/direct_message1.dart'; // 경로에 맞게 수정하세요.
 
 class Header extends StatelessWidget {
   @override
@@ -18,16 +19,20 @@ class Header extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: Icon(Icons.notifications_on_rounded, color: Colors.white,),
+                icon: Icon(Icons.notifications_on_rounded, color: Colors.white),
                 onPressed: () {
-                  // DM 아이콘 클릭 시 동작
+                  // 알림 아이콘 클릭 시 동작
                 },
               ),
               SizedBox(width: 10), // 아이콘 간격
               IconButton(
-                icon: Icon(Icons.message, color: Colors.white,),
+                icon: Icon(Icons.message, color: Colors.white),
                 onPressed: () {
-                  // 로그인 아이콘 클릭 시 동작
+                  // message 아이콘 클릭 시 DirectMessage1으로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DirectMessage1()),
+                  );
                 },
               ),
             ],

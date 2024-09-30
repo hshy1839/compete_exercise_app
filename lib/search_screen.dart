@@ -45,13 +45,19 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  // 팔로우 요청
-  Future<void> _followUser(String nickname, int index) async {
+  // 팔로우 및 팔로우 취소 요청
+  Future<void> _toggleFollowUser(String nickname, int index) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
+    // 현재 팔로우 상태에 따라 API 요청 분기
+    final isFollowing = _searchResults[index]['isFollowing'];
+    final url = isFollowing
+        ? 'http://localhost:8864/api/users/deletefollow' // 팔로우 취소
+        : 'http://localhost:8864/api/users/follow'; // 팔로우
+
     final response = await http.post(
-      Uri.parse('http://localhost:8864/api/users/follow'),
+      Uri.parse(url),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -60,18 +66,18 @@ class _SearchScreenState extends State<SearchScreen> {
     );
 
     if (response.statusCode == 200) {
-      // 성공적인 팔로우 처리
+      // 성공적인 팔로우/팔로우 취소 처리
       setState(() {
         _searchResults[index]['isFollowing'] = !_searchResults[index]['isFollowing']; // 팔로우 상태 토글
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('팔로우 성공')),
+        SnackBar(content: Text(isFollowing ? '팔로우 취소 성공' : '팔로우 성공')),
       );
     } else {
       // 오류 처리
       print('Error: ${response.body}');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('팔로우 실패: ${response.body}')),
+        SnackBar(content: Text('처리 실패: ${response.body}')),
       );
     }
   }
@@ -118,7 +124,7 @@ class _SearchScreenState extends State<SearchScreen> {
             title: Text(_searchResults[index]['nickname']),
             trailing: ElevatedButton(
               onPressed: () {
-                _followUser(_searchResults[index]['nickname'], index); // 닉네임 사용 및 인덱스 전달
+                _toggleFollowUser(_searchResults[index]['nickname'], index); // 팔로우 토글
               },
               child: Text(_searchResults[index]['isFollowing'] ? '팔로우 취소' : '팔로우'), // 팔로우 상태에 따라 텍스트 변경
             ),

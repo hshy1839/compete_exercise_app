@@ -48,6 +48,20 @@
 	<true/>
 	 <key>NSAllowsArbitraryLoads</key> <true/>
      <key>NSAllowsArbitraryLoadsInWebContent</key> <true/>
+
+      <key>CFBundleURLTypes</key>
+         <array>
+           <dict>
+           <key>CFBundleURLSchemes</key>
+           <array>
+             <!-- facebook login -->
+             <string>fbAPP-ID</string>
+
+             <!-- google login -->
+             <string>com.googleusercontent.apps.124501066523-9qagsni36gqj6qt4g7j8emnva0ltrt44</string>
+           </array>
+           </dict>
+         </array>
 </dict>
  <key>io.flutter.embedded_views_preview</key> <true/>
  	<key>YES</key>

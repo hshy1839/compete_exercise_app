@@ -10,6 +10,8 @@ import 'footer.dart';
 import 'login_activity/login.dart'; // 로그인 화면 import
 import 'login_activity/signup.dart'; // 회원가입1 페이지 import
 import 'add_plan/add_exercise_list.dart';
+import 'direct_message/direct_message1.dart';
+import 'direct_message/direct_message2.dart';
 
 void main() {
   runApp(MyApp());
@@ -34,6 +36,7 @@ class MyApp extends StatelessWidget {
         '/add_exercise_list': (context) => AddExerciseList(),
         '/add_planning': (context) => AddPlanning(),
         '/edit_profile': (context) => EditProfile(),
+        '/direct_message': (context) => DirectMessage1(),
       },
     );
   }
@@ -57,6 +60,7 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
     LoginScreen(),
     SignupScreen(),
     EditProfile(),
+    DirectMessage1(),
   ];
 
   Future<void> _onTabTapped(int index) async {

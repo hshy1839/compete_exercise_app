@@ -124,25 +124,82 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  Future<void> _participateInPlan(String planId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null || planId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('참여 요청을 보낼 수 없습니다.')),
+      );
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:8864/api/users/participate/$planId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('참여 요청이 성공적으로 전송되었습니다.')),
+        );
+      } else {
+        print('Failed to participate in plan. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error participating in plan: $e');
+    }
+  }
+
   void _confirmDelete(String planId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('삭제 확인', style: TextStyle(color: Colors.white)),
-        content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.white)),
+        title: Text('삭제 확인', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+        content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // 다이얼로그 닫기
             },
-            child: Text('아니요', style: TextStyle(color: Colors.white)),
+            child: Text('예', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // 다이얼로그 닫기
               _deleteExercisePlan(planId); // 삭제 요청
             },
-            child: Text('예', style: TextStyle(color: Colors.white)),
+            child: Text('아니요', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showParticipationDialog(String planId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('참여 확인', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+        content: Text('참여하시겠습니까?', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+            },
+            child: Text('예', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              await _participateInPlan(planId); // 참여 요청 함수 호출
+            },
+            child: Text('아니요', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
           ),
         ],
       ),
@@ -175,9 +232,10 @@ class _MainScreenState extends State<MainScreen> {
                         children: [
                           Row(
                             children: [
-                              CircleAvatar(
-                                backgroundImage: NetworkImage(plan['profilePic'] ?? ''),
-                                radius: 24,
+                              Icon(
+                                Icons.account_circle,
+                                size: 48, // CircleAvatar 크기 대체
+                                color: Colors.white, // 아이콘 색상
                               ),
                               SizedBox(width: 10),
                               Text(
@@ -208,37 +266,32 @@ class _MainScreenState extends State<MainScreen> {
                             style: TextStyle(color: Colors.white), // 텍스트 색상 설정
                           ),
                           Text(
-                            '장소: ${plan['selected_location']}',
+                            '위치: ${plan['selected_location']}',
                             style: TextStyle(color: Colors.white), // 텍스트 색상 설정
                           ),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                          if (isCurrentUserPlan) ...[
+                            SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                ElevatedButton(
-                                  onPressed: () {
-                                    print('참여하기 버튼 클릭됨');
-                                  },
-                                  child: Text('참여 신청'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white, // 버튼 배경 색상 설정
-                                  ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _confirmDelete(plan['id']),
                                 ),
-                                SizedBox(height: 8),
-                                if (isCurrentUserPlan)
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      _confirmDelete(plan['id']); // plan['id'] 전달
-                                    },
-                                    child: Text('삭제하기'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red, // 버튼 배경 색상 설정
-                                    ),
-                                  ),
                               ],
                             ),
-                          ),
+                          ] else ...[
+                            SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () => _showParticipationDialog(plan['id']),
+                                  child: Text('참여하기', style: TextStyle(color: Colors.black)),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),

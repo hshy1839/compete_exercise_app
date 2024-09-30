@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../header.dart';
+import '../socket_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -54,6 +55,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false); // 로그아웃 처리
+    await prefs.remove('token'); // JWT 삭제
+
+    // 소켓 연결 해제
+    SocketService().disconnect();
+    print('소켓 연결 해제됨'); // 소켓 해제 로그 출력
+
     Navigator.pushReplacementNamed(context, '/login'); // 로그인 화면으로 이동
   }
 
@@ -103,10 +110,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     _postCount.toString(), // 게시물 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text('Posts',
-                      style: TextStyle(color: Colors.white,)),
+                      style: TextStyle(color: Colors.white)),
                 ],
               ),
               SizedBox(width: 40),
@@ -114,10 +121,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     _followersCount.toString(), // 팔로워 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text('Followers',
-                      style: TextStyle(color: Colors.white,)),
+                      style: TextStyle(color: Colors.white)),
                 ],
               ),
               SizedBox(width: 40),
@@ -125,10 +132,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     _followingCount.toString(), // 팔로잉 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text('Following',
-                      style: TextStyle(color: Colors.white,)),
+                      style: TextStyle(color: Colors.white)),
                 ],
               ),
             ],
