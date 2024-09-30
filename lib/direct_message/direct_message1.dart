@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'direct_message2.dart'; // 직접 생성한 파일을 경로에 맞게 임포트하세요.
+import 'direct_message2.dart'; // DirectMessage2를 임포트하세요.
 
 class DirectMessage1 extends StatefulWidget {
   @override
@@ -12,16 +12,45 @@ class DirectMessage1 extends StatefulWidget {
 class _DirectMessage1State extends State<DirectMessage1> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
+  String _nickname = ''; // _nickname 속성 추가
+  String _userId = ''; // 유저 ID를 저장할 변수 추가
 
   @override
   void initState() {
     super.initState();
+    _fetchUserInfo(); // 사용자 정보 조회
   }
 
   @override
   void dispose() {
     _searchController.dispose(); // 텍스트 컨트롤러 해제
     super.dispose();
+  }
+
+  Future<void> _fetchUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('http://localhost:8864/api/users/userinfo'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> userData = jsonDecode(response.body);
+
+      if (userData['success']) {
+        setState(() {
+          _nickname = userData['nickname'] ?? 'Unknown'; // 기본값 제공
+        });
+      } else {
+        print('사용자 정보 조회 실패: ${userData['message']}');
+      }
+    } else {
+      print('사용자 정보 조회 실패: ${response.statusCode}');
+    }
   }
 
   Future<void> _searchNickname() async {
@@ -44,8 +73,7 @@ class _DirectMessage1State extends State<DirectMessage1> {
         _searchResults = responseData.map((item) {
           return {
             'nickname': item['nickname'] ?? '닉네임 없음',
-            'id': item['_id'] ?? '아이디 없음',
-            'isFollowing': item['isFollowing'] ?? false,
+            'id': item['_id'] ?? '아이디 없음', // ID를 사용
           };
         }).toList();
       });
@@ -54,18 +82,50 @@ class _DirectMessage1State extends State<DirectMessage1> {
     }
   }
 
-  void _navigateToDirectMessage2(String nickname, String id) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DirectMessage2(
-          nickname: nickname,
-          userId: id,
-          receiverId: id, // 여기에서 receiverId 추가
-          initialMessages: [], // 초기 메시지 전달 (필요한 경우)
-        ),
-      ),
+  Future<String?> _getUserIdByNickname(String nickname) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('http://localhost:8864/api/users/search?nickname=$nickname'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
     );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> userData = jsonDecode(response.body);
+      if (userData.isNotEmpty) {
+        return userData[0]['_id']; // 첫 번째 사용자 ID 반환
+      } else {
+        print('사용자 ID를 찾을 수 없습니다.');
+      }
+    } else {
+      print('ID 조회 실패: ${response.statusCode}');
+    }
+    return null; // ID를 찾지 못한 경우 null 반환
+  }
+
+  void _navigateToDirectMessage2(String receiverId) async {
+    String? userId = await _getUserIdByNickname(_nickname); // 닉네임으로 사용자 ID 조회
+    print('userId: $userId, receiverId: $receiverId');
+
+    // Ensure both IDs are valid before navigation
+    if (userId != null && receiverId.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DirectMessage2(
+            chatRoomId: '', // 필요한 경우 채팅방 ID 추가
+            userId: userId, // 내 ID를 사용
+            receiverId: receiverId, // ID를 사용하여 대화방으로 이동
+          ),
+        ),
+      );
+    } else {
+      // 오류 처리: ID가 비어있는 경우
+      print('유효하지 않은 ID: userId: $userId, receiverId: $receiverId');
+    }
   }
 
   @override
@@ -112,19 +172,11 @@ class _DirectMessage1State extends State<DirectMessage1> {
                 return ListTile(
                   title: Text(_searchResults[index]['nickname']),
                   onTap: () {
+                    // 닉네임 클릭 시 DirectMessage2로 이동
                     _navigateToDirectMessage2(
-                      _searchResults[index]['nickname'],
-                      _searchResults[index]['id'],
+                      _searchResults[index]['id'], // receiverId
                     );
                   },
-                  trailing: ElevatedButton(
-                    onPressed: () {
-                      _followUser(_searchResults[index]['nickname'], index);
-                    },
-                    child: Text(
-                      _searchResults[index]['isFollowing'] ? 'Unfollow' : 'Follow',
-                    ),
-                  ),
                 );
               },
             ),
@@ -132,11 +184,5 @@ class _DirectMessage1State extends State<DirectMessage1> {
         ],
       ),
     );
-  }
-
-  void _followUser(String nickname, int index) async {
-    // 팔로우 또는 언팔로우 요청 코드 작성
-    // 예: http.post() 등을 사용하여 서버와 통신
-    // 성공적으로 팔로우/언팔로우 후 _searchResults[index]['isFollowing'] 값을 반영
   }
 }

@@ -1,12 +1,23 @@
+import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-class SocketService {
+class SocketService extends ChangeNotifier {
   late IO.Socket socket;
 
   SocketService() {
     socket = IO.io('http://localhost:8864', {
       'transports': ['websocket'],
       'autoConnect': true,
+    });
+
+    socket.onConnect((_) {
+      print('소켓 연결됨');
+      notifyListeners();
+    });
+
+    socket.onDisconnect((_) {
+      print('소켓 연결 해제됨');
+      notifyListeners();
     });
   }
 
@@ -18,7 +29,11 @@ class SocketService {
     socket.disconnect();
   }
 
-  // 소켓 이벤트 핸들링 메서드 추가
+  // 이벤트 리스너 메서드 추가
+  void on(String event, Function callback) {
+    socket.on(event, callback());
+  }
+
   void onConnect(Function callback) {
     socket.onConnect((_) => callback());
   }
@@ -27,8 +42,4 @@ class SocketService {
     socket.onDisconnect((_) => callback());
   }
 
-  // 다른 이벤트 리스너 메서드 추가
-  void on(String event, Function callback) {
-    socket.on(event, callback());
-  }
 }
