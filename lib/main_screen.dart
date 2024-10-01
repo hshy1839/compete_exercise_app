@@ -12,6 +12,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<Map<String, dynamic>> exercisePlans = [];
   String? currentUserNickname;
+  String? currentUserId; // 현재 사용자 ID 추가
 
   @override
   void initState() {
@@ -36,12 +37,13 @@ class _MainScreenState extends State<MainScreen> {
         final data = jsonDecode(response.body);
         setState(() {
           currentUserNickname = data['nickname']; // 로그인한 사용자의 닉네임 설정
+          currentUserId = data['_id']; // 로그인한 사용자의 ID 설정
         });
       } else {
-        print('Failed to load user info. Status code: ${response.statusCode}');
+        print('사용자 정보를 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching user info: $e');
+      print('사용자 정보를 가져오는 중 오류 발생: $e');
     }
   }
 
@@ -64,24 +66,30 @@ class _MainScreenState extends State<MainScreen> {
         setState(() {
           exercisePlans = plans.map((plan) {
             return {
-              'id': plan['_id'] ?? '', // 계획 ID 추가
-              'nickname': plan['nickname'] ?? 'Unknown User',
-              'selected_date': plan['selected_date'] ?? 'Unknown Date',
-              'selected_exercise': plan['selected_exercise'] ?? 'Unknown Exercise',
-              'selected_participants': plan['selected_participants'] ?? 'Unknown Participants',
-              'selected_startTime': plan['selected_startTime'] ?? 'Unknown Start Time',
-              'selected_endTime': plan['selected_endTime'] ?? 'Unknown End Time',
-              'selected_location': plan['selected_location'] ?? 'Unknown Location',
-              'profilePic': plan['profilePic'] ?? '', // 프로필 사진 추가
+              'id': plan['_id'] ?? '',
+              // 계획 ID 추가
+              'nickname': plan['nickname'] ?? '알 수 없는 사용자',
+              'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
+              'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
+              'selected_participants': plan['selected_participants'] ?? '0',
+              // 참가자 수 초기화
+              'participants': plan['participants'] ?? [],
+              // 참가자 배열 추가
+              'selected_startTime': plan['selected_startTime'] ??
+                  '알 수 없는 시작 시간',
+              'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
+              'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
+              'profilePic': plan['profilePic'] ?? '',
+              // 프로필 사진 추가
             };
           }).toList();
         });
       } else {
-        print('Failed to load exercise plans. Status code: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        print('운동 계획을 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
+        print('응답 본문: ${response.body}');
       }
     } catch (e) {
-      print('Error fetching exercise plans: $e');
+      print('운동 계획을 가져오는 중 오류 발생: $e');
     }
   }
 
@@ -116,19 +124,20 @@ class _MainScreenState extends State<MainScreen> {
           SnackBar(content: Text('운동 계획이 삭제되었습니다.')),
         );
       } else {
-        print('Failed to delete exercise plan. Status code: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        print('운동 계획 삭제에 실패했습니다. 상태 코드: ${response.statusCode}');
+        print('응답 본문: ${response.body}');
       }
     } catch (e) {
-      print('Error deleting exercise plan: $e');
+      print('운동 계획 삭제 중 오류 발생: $e');
     }
   }
 
-  Future<void> _participateInPlan(String planId) async {
+  Future<void> _participateInPlan(String currentUserId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    if (token == null || planId.isEmpty) {
+    // Token, planId 및 currentUserId의 유효성 검사
+    if (token == null || token.isEmpty || currentUserId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('참여 요청을 보낼 수 없습니다.')),
       );
@@ -136,73 +145,107 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     try {
+      print(
+          "Sending participation request for planId: $currentUserId, userId: $currentUserId"); // 디버깅 로그 추가
       final response = await http.post(
-        Uri.parse('http://localhost:8864/api/users/participate/$planId'),
+        Uri.parse('http://localhost:8864/api/users/participate/$currentUserId'),
         headers: {
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
+        body: jsonEncode({
+          'userId': currentUserId, // 현재 사용자 ID를 요청 본문에 포함
+        }),
       );
 
+      print("Response status: ${response.statusCode}"); // 응답 상태 코드 로그 추가
       if (response.statusCode == 200) {
+        setState(() {
+          final index = exercisePlans.indexWhere((plan) =>
+          plan['id'] == currentUserId);
+          if (index != -1) {
+            exercisePlans[index]['selected_participants'] += 1; // 참가자 수 증가
+            exercisePlans[index]['participants'].add(
+                currentUserId); // 참가자 배열에 추가
+          }
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('참여 요청이 성공적으로 전송되었습니다.')),
         );
       } else {
-        print('Failed to participate in plan. Status code: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        final errorMessage = jsonDecode(response.body)['message'] ?? '참여 요청 실패';
+        print('운동 계획 참여에 실패했습니다. 상태 코드: ${response
+            .statusCode}, 메시지: $errorMessage');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
       }
     } catch (e) {
-      print('Error participating in plan: $e');
+      print('운동 계획 참여 중 오류 발생: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('서버와의 연결에 문제가 발생했습니다.')),
+      );
     }
   }
 
   void _confirmDelete(String planId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('삭제 확인', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-        content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-            },
-            child: Text('예', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+      builder: (context) =>
+          AlertDialog(
+            title: Text('삭제 확인', style: TextStyle(color: Colors.black)),
+            // 텍스트 색상 검은색으로 변경
+            content: Text(
+                '계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)),
+            // 텍스트 색상 검은색으로 변경
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                },
+                child: Text('아니요',
+                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                  _deleteExercisePlan(planId); // 삭제 요청
+                },
+                child: Text('예',
+                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-              _deleteExercisePlan(planId); // 삭제 요청
-            },
-            child: Text('아니요', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-          ),
-        ],
-      ),
     );
   }
 
   void _showParticipationDialog(String planId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('참여 확인', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-        content: Text('참여하시겠습니까?', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-            },
-            child: Text('예', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+      builder: (context) =>
+          AlertDialog(
+            title: Text('참여 확인', style: TextStyle(color: Colors.black)),
+            // 텍스트 색상 검은색으로 변경
+            content: Text('참여하시겠습니까?', style: TextStyle(color: Colors.black)),
+            // 텍스트 색상 검은색으로 변경
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                },
+                child: Text('아니요',
+                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                  await _participateInPlan(planId); // 참여 요청 함수 호출
+                },
+                child: Text('예',
+                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-              await _participateInPlan(planId); // 참여 요청 함수 호출
-            },
-            child: Text('아니요', style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-          ),
-        ],
-      ),
     );
   }
 
@@ -220,78 +263,62 @@ class _MainScreenState extends State<MainScreen> {
                 itemCount: exercisePlans.length,
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
-                  final isCurrentUserPlan = currentUserNickname == plan['nickname'];
+                  final isCurrentUserPlan = currentUserNickname ==
+                      plan['nickname'];
 
                   return Card(
                     color: Colors.grey[900], // 리스트 아이템 배경 색상 설정
-                    margin: EdgeInsets.all(8.0),
+                    margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     child: Padding(
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(15.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(
-                                Icons.account_circle,
-                                size: 48, // CircleAvatar 크기 대체
-                                color: Colors.white, // 아이콘 색상
-                              ),
-                              SizedBox(width: 10),
                               Text(
-                                '${plan['nickname']}님의 운동 계획',
-                                style: TextStyle(color: Colors.white), // 텍스트 색상 설정
+                                '${plan['nickname']}님의 계획', // 수정된 부분
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            '날짜: ${plan['selected_date']}',
-                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
-                          ),
-                          Text(
-                            '운동: ${plan['selected_exercise']}',
-                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
-                          ),
-                          Text(
-                            '참가자: ${plan['selected_participants']}명',
-                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
-                          ),
-                          Text(
-                            '시작 시간: ${plan['selected_startTime']}',
-                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
-                          ),
-                          Text(
-                            '종료 시간: ${plan['selected_endTime']}',
-                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
-                          ),
-                          Text(
-                            '위치: ${plan['selected_location']}',
-                            style: TextStyle(color: Colors.white), // 텍스트 색상 설정
-                          ),
-                          if (isCurrentUserPlan) ...[
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
+                              if (isCurrentUserPlan) // 현재 사용자가 계획 생성자인 경우 삭제 버튼 표시
                                 IconButton(
                                   icon: Icon(Icons.delete, color: Colors.red),
                                   onPressed: () => _confirmDelete(plan['id']),
                                 ),
-                              ],
-                            ),
-                          ] else ...[
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () => _showParticipationDialog(plan['id']),
-                                  child: Text('참여하기', style: TextStyle(color: Colors.black)),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            '운동: ${plan['selected_exercise']}',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            '날짜: ${plan['selected_date']}',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            '참가자 수: ${plan['selected_participants']}',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (!plan['participants'].contains(
+                                  currentUserId)) {
+                                _showParticipationDialog(plan['id']);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('이미 참여하고 있는 계획입니다.')),
+                                );
+                              }
+                            },
+                            child: Text('참여하기'),
+                          ),
                         ],
                       ),
                     ),
