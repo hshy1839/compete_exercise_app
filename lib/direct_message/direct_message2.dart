@@ -57,10 +57,13 @@ class _DirectMessage2State extends State<DirectMessage2> {
       'timestamp': DateTime.tryParse(data['timestamp']) ?? DateTime.now(),
     };
 
-    setState(() {
-      _messages.add(newMessage);
-    });
-    _scrollToBottom();
+    // 중복 체크: 이미 메시지가 있는지 확인
+    if (!_messages.any((msg) => msg['_id'] == newMessage['_id'])) {
+      setState(() {
+        _messages.add(newMessage);
+      });
+      _scrollToBottom();
+    }
   }
 
   void _handleExistingMessages(data) {
@@ -77,7 +80,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
                 : DateTime.now(),
           };
 
-          // 중복 체크
+          // 중복 체크: 이미 메시지가 있는지 확인
           if (!_messages.any((msg) => msg['_id'] == existingMessage['_id'])) {
             _messages.add(existingMessage);
           }
@@ -86,6 +89,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
       _scrollToBottom();
     });
   }
+
 
   void _sendMessage() {
     final message = _messageController.text.trim();
