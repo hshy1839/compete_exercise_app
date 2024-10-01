@@ -55,10 +55,13 @@ class _DirectMessage2State extends State<DirectMessage2> {
     final newMessage = {
       'senderId': data['senderId'],
       'message': data['message'],
+      'isMe': data['senderId'] == widget.userId, // 추가된 부분
     };
 
     // 중복 체크
-    if (!_messages.any((msg) => msg['message'] == newMessage['message'] && msg['senderId'] == newMessage['senderId'])) {
+    if (!_messages.any((msg) =>
+    msg['message'] == newMessage['message'] &&
+        msg['senderId'] == newMessage['senderId'])) {
       setState(() {
         _messages.add(newMessage);
       });
@@ -72,10 +75,13 @@ class _DirectMessage2State extends State<DirectMessage2> {
         final existingMessage = {
           'senderId': message['senderId'],
           'message': message['message'],
+          'isMe': message['senderId'] == widget.userId, // 비교
         };
 
         // 중복 체크
-        if (!_messages.any((msg) => msg['message'] == existingMessage['message'] && msg['senderId'] == existingMessage['senderId'])) {
+        if (!_messages.any((msg) =>
+        msg['message'] == existingMessage['message'] &&
+            msg['senderId'] == existingMessage['senderId'])) {
           _messages.add(existingMessage);
         }
       }
@@ -97,6 +103,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
         _messages.add({
           'senderId': widget.userId,
           'message': message,
+          'isMe': true, // 실시간 메시지의 경우 true로 설정
         });
         _messageController.clear(); // 메시지 전송 후 입력 필드 비우기
       });
@@ -128,7 +135,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
-                final isMe = message['senderId'] == widget.userId;
+                final isMe = message['isMe']; // isMe 속성을 사용하여 구분
 
                 return Align(
                   alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
