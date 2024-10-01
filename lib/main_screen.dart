@@ -164,7 +164,6 @@ class _MainScreenState extends State<MainScreen> {
           final index = exercisePlans.indexWhere((plan) =>
           plan['id'] == currentUserId);
           if (index != -1) {
-            exercisePlans[index]['selected_participants'] += 1; // 참가자 수 증가
             exercisePlans[index]['participants'].add(
                 currentUserId); // 참가자 배열에 추가
           }
@@ -302,9 +301,10 @@ class _MainScreenState extends State<MainScreen> {
                             style: TextStyle(color: Colors.white),
                           ),
                           Text(
-                            '참가자 수: ${plan['selected_participants']}',
+                            '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
                             style: TextStyle(color: Colors.white),
                           ),
+
                           SizedBox(height: 10),
                           ElevatedButton(
                             onPressed: () {
