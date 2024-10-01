@@ -75,9 +75,12 @@ class _DirectMessage2State extends State<DirectMessage2> {
     }
   }
 
-
   @override
   void dispose() {
+    // 채팅방 나가기 이벤트를 서버로 보냄
+    socket.emit('leaveChatRoom', {'chatRoomId': widget.chatRoomId});
+
+    // 소켓 연결 해제
     socket.dispose();
     super.dispose();
   }
