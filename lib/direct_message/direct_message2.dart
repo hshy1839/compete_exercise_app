@@ -6,7 +6,11 @@ class DirectMessage2 extends StatefulWidget {
   final String userId; // 본인 ID
   final String receiverId; // 상대방 ID
 
-  DirectMessage2({required this.chatRoomId, required this.userId, required this.receiverId});
+  DirectMessage2({
+    required this.chatRoomId,
+    required this.userId,
+    required this.receiverId,
+  });
 
   @override
   _DirectMessage2State createState() => _DirectMessage2State();
@@ -34,23 +38,47 @@ class _DirectMessage2State extends State<DirectMessage2> {
 
     // 채팅방 참여
     socket.emit('joinChatRoom', {
+      'chatRoomId': widget.chatRoomId,
       'senderId': widget.userId,
       'receiverId': widget.receiverId,
     });
 
-    // 서버에서 채팅방 참여 응답을 받음
-    socket.on('joinedChatRoom', (data) {
-      print('채팅방에 참여했습니다. ID: ${data['chatRoomId']}');
-    });
-
     // 서버에서 수신한 메시지 처리
-    socket.on('receiveMessage', (data) {
+    socket.on('receiveMessage', _handleReceivedMessage);
+
+    // 서버에서 기존 메시지 수신
+    socket.on('existingMessages', _handleExistingMessages);
+  }
+
+  // 수신한 메시지 처리
+  void _handleReceivedMessage(data) {
+    final newMessage = {
+      'senderId': data['senderId'],
+      'message': data['message'],
+    };
+
+    // 중복 체크
+    if (!_messages.any((msg) => msg['message'] == newMessage['message'] && msg['senderId'] == newMessage['senderId'])) {
       setState(() {
-        _messages.add({
-          'senderId': data['senderId'],
-          'message': data['message'],
-        });
+        _messages.add(newMessage);
       });
+    }
+  }
+
+  // 기존 메시지 처리
+  void _handleExistingMessages(data) {
+    setState(() {
+      for (var message in data) {
+        final existingMessage = {
+          'senderId': message['senderId'],
+          'message': message['message'],
+        };
+
+        // 중복 체크
+        if (!_messages.any((msg) => msg['message'] == existingMessage['message'] && msg['senderId'] == existingMessage['senderId'])) {
+          _messages.add(existingMessage);
+        }
+      }
     });
   }
 
@@ -61,7 +89,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
       socket.emit('sendMessage', {
         'chatRoomId': widget.chatRoomId,
         'senderId': widget.userId,
-        'receiverId': widget.receiverId, // receiverId 추가
+        'receiverId': widget.receiverId,
         'message': message,
       });
 
@@ -70,13 +98,17 @@ class _DirectMessage2State extends State<DirectMessage2> {
           'senderId': widget.userId,
           'message': message,
         });
-        _messageController.clear();
+        _messageController.clear(); // 메시지 전송 후 입력 필드 비우기
       });
     }
   }
 
   @override
   void dispose() {
+    // 이벤트 리스너 제거
+    socket.off('receiveMessage', _handleReceivedMessage);
+    socket.off('existingMessages', _handleExistingMessages);
+
     // 채팅방 나가기 이벤트를 서버로 보냄
     socket.emit('leaveChatRoom', {'chatRoomId': widget.chatRoomId});
 
@@ -96,9 +128,24 @@ class _DirectMessage2State extends State<DirectMessage2> {
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
-                return ListTile(
-                  title: Text(message['message']),
-                  subtitle: Text(message['senderId'] == widget.userId ? 'You' : 'Other'),
+                final isMe = message['senderId'] == widget.userId;
+
+                return Align(
+                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                    decoration: BoxDecoration(
+                      color: isMe ? Colors.blue[400] : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Text(
+                      message['message'],
+                      style: TextStyle(
+                        color: isMe ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
