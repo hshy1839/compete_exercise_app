@@ -61,6 +61,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
       socket.emit('sendMessage', {
         'chatRoomId': widget.chatRoomId,
         'senderId': widget.userId,
+        'receiverId': widget.receiverId, // receiverId 추가
         'message': message,
       });
 
@@ -73,6 +74,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
       });
     }
   }
+
 
   @override
   void dispose() {

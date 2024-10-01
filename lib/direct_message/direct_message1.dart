@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'direct_message2.dart'; // DirectMessage2를 임포트하세요.
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class DirectMessage1 extends StatefulWidget {
   @override
@@ -14,13 +15,35 @@ class _DirectMessage1State extends State<DirectMessage1> {
   List<Map<String, dynamic>> _searchResults = [];
   String _nickname = ''; // _nickname 속성 추가
   String _userId = ''; // 유저 ID를 저장할 변수 추가
+  IO.Socket? socket;
 
   @override
   void initState() {
     super.initState();
+    _initializeSocket();
     _fetchUserInfo(); // 사용자 정보 조회
   }
 
+  void _initializeSocket() {
+    // Socket.IO 초기화
+    socket = IO.io('http://localhost:8864', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false, // 필요시 자동 연결 비활성화
+    });
+
+    socket!.connect(); // 소켓 연결
+    socket!.on('connect', (_) {
+      print('Socket connected: ${socket!.id}');
+    });
+
+    socket!.on('disconnect', (_) {
+      print('Socket disconnected');
+    });
+
+    socket!.on('connect_error', (data) {
+      print('Socket connection error: $data');
+    });
+  }
   @override
   void dispose() {
     _searchController.dispose(); // 텍스트 컨트롤러 해제
@@ -110,23 +133,29 @@ class _DirectMessage1State extends State<DirectMessage1> {
     String? userId = await _getUserIdByNickname(_nickname); // 닉네임으로 사용자 ID 조회
     print('userId: $userId, receiverId: $receiverId');
 
-    // Ensure both IDs are valid before navigation
     if (userId != null && receiverId.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DirectMessage2(
-            chatRoomId: '', // 필요한 경우 채팅방 ID 추가
-            userId: userId, // 내 ID를 사용
-            receiverId: receiverId, // ID를 사용하여 대화방으로 이동
+      // Socket.IO로 채팅방 생성 요청
+      socket?.emit('createChatRoom', {'senderId': userId, 'receiverId': receiverId});
+
+      socket?.on('chatRoomCreated', (data) {
+        String chatRoomId = data['chatRoomId']; // 서버로부터 받은 채팅방 ID
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DirectMessage2(
+              chatRoomId: chatRoomId, // 생성된 채팅방 ID 전달
+              userId: userId, // 내 ID 전달
+              receiverId: receiverId, // 상대방 ID 전달
+            ),
           ),
-        ),
-      );
+        );
+      });
     } else {
       // 오류 처리: ID가 비어있는 경우
       print('유효하지 않은 ID: userId: $userId, receiverId: $receiverId');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
