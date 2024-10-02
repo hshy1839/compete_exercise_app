@@ -38,6 +38,7 @@ class _MainScreenState extends State<MainScreen> {
         setState(() {
           currentUserNickname = data['nickname']; // 로그인한 사용자의 닉네임 설정
           currentUserId = data['_id']; // 로그인한 사용자의 ID 설정
+          // 필요하다면 다른 데이터도 여기서 설정 가능
         });
       } else {
         print('사용자 정보를 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
@@ -46,6 +47,7 @@ class _MainScreenState extends State<MainScreen> {
       print('사용자 정보를 가져오는 중 오류 발생: $e');
     }
   }
+
 
   Future<void> _fetchExercisePlans() async {
     final prefs = await SharedPreferences.getInstance();
@@ -264,6 +266,10 @@ class _MainScreenState extends State<MainScreen> {
                   final plan = exercisePlans[index];
                   final isCurrentUserPlan = currentUserNickname ==
                       plan['nickname'];
+                  // 현재 사용자 ID가 participants 배열에 포함되어 있는지 확인
+                  if ( plan['participants'].contains(currentUserId)) {
+                    return SizedBox.shrink(); // 참여 중인 계획은 렌더링하지 않음
+                  }
 
                   return Card(
                     color: Colors.grey[900], // 리스트 아이템 배경 색상 설정
@@ -304,7 +310,10 @@ class _MainScreenState extends State<MainScreen> {
                             '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
                             style: TextStyle(color: Colors.white),
                           ),
-
+                          Text(
+                            '장소: ${plan['selected_location']}',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           SizedBox(height: 10),
                           ElevatedButton(
                             onPressed: () {
