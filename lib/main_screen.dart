@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'header.dart'; // Header 위젯을 import합니다.
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class MainScreen extends StatefulWidget {
   @override
@@ -13,13 +14,67 @@ class _MainScreenState extends State<MainScreen> {
   List<Map<String, dynamic>> exercisePlans = [];
   String? currentUserNickname;
   String? currentUserId; // 현재 사용자 ID 추가
+  late IO.Socket socket;
 
   @override
   void initState() {
     super.initState();
     _fetchUserInfo();
-    _fetchExercisePlans();
+    _initializeSocket();
   }
+
+  void _initializeSocket() {
+    SharedPreferences.getInstance().then((prefs) {
+      final token = prefs.getString('token') ?? '';
+
+      // Socket.IO 클라이언트 초기화
+      socket = IO.io('http://localhost:8864', <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
+        'query': {
+          'token': token, // JWT 토큰을 쿼리 매개변수로 전달
+        },
+      });
+
+      socket.connect();
+
+      socket.onConnect((_) {
+        print('Socket.IO에 연결되었습니다.');
+
+        // 운동 계획 요청
+        socket.emit('getExercisePlans', token); // 서버에 운동 계획 요청
+
+        // 서버에서 exercisePlans 이벤트를 수신하여 데이터 업데이트
+        socket.on('exercisePlansResponse', (data) {
+          setState(() {
+            if (data['success']) {
+              exercisePlans = (data['plans'] as List).map((plan) {
+                return {
+                  'id': plan['_id'] ?? '',
+                  'nickname': plan['nickname'] ?? '알 수 없는 사용자',
+                  'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
+                  'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
+                  'selected_participants': plan['selected_participants'] ?? '0',
+                  'participants': plan['participants'] ?? [],
+                  'selected_startTime': plan['selected_startTime'] ?? '알 수 없는 시작 시간',
+                  'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
+                  'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
+                  'profilePic': plan['profilePic'] ?? '',
+                };
+              }).toList();
+            } else {
+              print('운동 계획 로드 실패: ${data['message']}');
+            }
+          });
+        });
+      });
+
+      socket.onDisconnect((_) {
+        print('Socket.IO에 연결이 끊어졌습니다.');
+      });
+    });
+  }
+
 
   Future<void> _fetchUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,7 +93,6 @@ class _MainScreenState extends State<MainScreen> {
         setState(() {
           currentUserNickname = data['nickname']; // 로그인한 사용자의 닉네임 설정
           currentUserId = data['_id']; // 로그인한 사용자의 ID 설정
-          // 필요하다면 다른 데이터도 여기서 설정 가능
         });
       } else {
         print('사용자 정보를 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
@@ -48,55 +102,8 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
-  Future<void> _fetchExercisePlans() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/planinfo'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final plans = data['plans'] as List;
-
-        setState(() {
-          exercisePlans = plans.map((plan) {
-            return {
-              'id': plan['_id'] ?? '',
-              // 계획 ID 추가
-              'nickname': plan['nickname'] ?? '알 수 없는 사용자',
-              'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
-              'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
-              'selected_participants': plan['selected_participants'] ?? '0',
-              // 참가자 수 초기화
-              'participants': plan['participants'] ?? [],
-              // 참가자 배열 추가
-              'selected_startTime': plan['selected_startTime'] ??
-                  '알 수 없는 시작 시간',
-              'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
-              'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
-              'profilePic': plan['profilePic'] ?? '',
-              // 프로필 사진 추가
-            };
-          }).toList();
-        });
-      } else {
-        print('운동 계획을 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
-        print('응답 본문: ${response.body}');
-      }
-    } catch (e) {
-      print('운동 계획을 가져오는 중 오류 발생: $e');
-    }
-  }
-
   Future<void> _refresh() async {
-    await _fetchExercisePlans();
+    // Refresh logic (optional)
   }
 
   Future<void> _deleteExercisePlan(String planId) async {
@@ -127,7 +134,6 @@ class _MainScreenState extends State<MainScreen> {
         );
       } else {
         print('운동 계획 삭제에 실패했습니다. 상태 코드: ${response.statusCode}');
-        print('응답 본문: ${response.body}');
       }
     } catch (e) {
       print('운동 계획 삭제 중 오류 발생: $e');
@@ -138,7 +144,6 @@ class _MainScreenState extends State<MainScreen> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    // Token, planId 및 currentUserId의 유효성 검사
     if (token == null || token.isEmpty || currentUserId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('참여 요청을 보낼 수 없습니다.')),
@@ -147,8 +152,6 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     try {
-      print(
-          "Sending participation request for planId: $currentUserId, userId: $currentUserId"); // 디버깅 로그 추가
       final response = await http.post(
         Uri.parse('http://localhost:8864/api/users/participate/$currentUserId'),
         headers: {
@@ -156,18 +159,15 @@ class _MainScreenState extends State<MainScreen> {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'userId': currentUserId, // 현재 사용자 ID를 요청 본문에 포함
+          'userId': currentUserId,
         }),
       );
 
-      print("Response status: ${response.statusCode}"); // 응답 상태 코드 로그 추가
       if (response.statusCode == 200) {
         setState(() {
-          final index = exercisePlans.indexWhere((plan) =>
-          plan['id'] == currentUserId);
+          final index = exercisePlans.indexWhere((plan) => plan['id'] == currentUserId);
           if (index != -1) {
-            exercisePlans[index]['participants'].add(
-                currentUserId); // 참가자 배열에 추가
+            exercisePlans[index]['participants'].add(currentUserId); // 참가자 배열에 추가
           }
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,8 +175,6 @@ class _MainScreenState extends State<MainScreen> {
         );
       } else {
         final errorMessage = jsonDecode(response.body)['message'] ?? '참여 요청 실패';
-        print('운동 계획 참여에 실패했습니다. 상태 코드: ${response
-            .statusCode}, 메시지: $errorMessage');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
@@ -192,62 +190,57 @@ class _MainScreenState extends State<MainScreen> {
   void _confirmDelete(String planId) {
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: Text('삭제 확인', style: TextStyle(color: Colors.black)),
-            // 텍스트 색상 검은색으로 변경
-            content: Text(
-                '계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)),
-            // 텍스트 색상 검은색으로 변경
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                },
-                child: Text('아니요',
-                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                  _deleteExercisePlan(planId); // 삭제 요청
-                },
-                child: Text('예',
-                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('삭제 확인', style: TextStyle(color: Colors.black)),
+        content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+            },
+            child: Text('아니요', style: TextStyle(color: Colors.black)),
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              _deleteExercisePlan(planId); // 삭제 요청
+            },
+            child: Text('예', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
     );
   }
 
   void _showParticipationDialog(String planId) {
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: Text('참여 확인', style: TextStyle(color: Colors.black)),
-            // 텍스트 색상 검은색으로 변경
-            content: Text('참여하시겠습니까?', style: TextStyle(color: Colors.black)),
-            // 텍스트 색상 검은색으로 변경
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                },
-                child: Text('아니요',
-                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                  await _participateInPlan(planId); // 참여 요청 함수 호출
-                },
-                child: Text('예',
-                    style: TextStyle(color: Colors.black)), // 텍스트 색상 검은색으로 변경
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('참여 확인', style: TextStyle(color: Colors.black)),
+        content: Text('참여하시겠습니까?', style: TextStyle(color: Colors.black)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+            },
+            child: Text('아니요', style: TextStyle(color: Colors.black)),
           ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              await _participateInPlan(planId); // 참여 요청 함수 호출
+            },
+            child: Text('예', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    socket.dispose(); // Socket.IO 소켓 종료
+    super.dispose();
   }
 
   @override
@@ -264,10 +257,10 @@ class _MainScreenState extends State<MainScreen> {
                 itemCount: exercisePlans.length,
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
-                  final isCurrentUserPlan = currentUserNickname ==
-                      plan['nickname'];
+                  final isCurrentUserPlan = currentUserNickname == plan['nickname'];
+
                   // 현재 사용자 ID가 participants 배열에 포함되어 있는지 확인
-                  if ( plan['participants'].contains(currentUserId)) {
+                  if (plan['participants'].contains(currentUserId)) {
                     return SizedBox.shrink(); // 참여 중인 계획은 렌더링하지 않음
                   }
 
@@ -290,10 +283,12 @@ class _MainScreenState extends State<MainScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              if (isCurrentUserPlan) // 현재 사용자가 계획 생성자인 경우 삭제 버튼 표시
+                              if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
                                 IconButton(
                                   icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _confirmDelete(plan['id']),
+                                  onPressed: () {
+                                    _confirmDelete(plan['id']);
+                                  },
                                 ),
                             ],
                           ),
@@ -307,24 +302,25 @@ class _MainScreenState extends State<MainScreen> {
                             style: TextStyle(color: Colors.white),
                           ),
                           Text(
-                            '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
+                            '시작 시간: ${plan['selected_startTime']}',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Text(
+                            '종료 시간: ${plan['selected_endTime']}',
                             style: TextStyle(color: Colors.white),
                           ),
                           Text(
                             '장소: ${plan['selected_location']}',
                             style: TextStyle(color: Colors.white),
                           ),
+                          Text(
+                            '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           SizedBox(height: 10),
                           ElevatedButton(
                             onPressed: () {
-                              if (!plan['participants'].contains(
-                                  currentUserId)) {
-                                _showParticipationDialog(plan['id']);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('이미 참여하고 있는 계획입니다.')),
-                                );
-                              }
+                              _showParticipationDialog(plan['id']); // 참여 다이얼로그 표시
                             },
                             child: Text('참여하기'),
                           ),
