@@ -140,52 +140,37 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Future<void> _participateInPlan(String currentUserId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+  Future<void> _participateInPlan(String planId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
 
-    if (token == null || token.isEmpty || currentUserId.isEmpty) {
+    if (token.isEmpty || currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('참여 요청을 보낼 수 없습니다.')),
       );
       return;
     }
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:8864/api/users/participate/$currentUserId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'userId': currentUserId,
-        }),
-      );
+    // 참여 요청을 Socket.IO를 통해 서버로 전송
+    socket.emit('participateInPlan', {
+      'planId': planId,
+      'userId': currentUserId,
+    });
 
-      if (response.statusCode == 200) {
-        setState(() {
-          final index = exercisePlans.indexWhere((plan) => plan['id'] == currentUserId);
-          if (index != -1) {
-            exercisePlans[index]['participants'].add(currentUserId); // 참가자 배열에 추가
-          }
-        });
+    // 서버에서 참여 응답을 수신
+    socket.on('participateResponse', (data) {
+      if (data['success']) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('참여 요청이 성공적으로 전송되었습니다.')),
         );
       } else {
-        final errorMessage = jsonDecode(response.body)['message'] ?? '참여 요청 실패';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(content: Text('참여 요청 실패: ${data['message']}')),
         );
       }
-    } catch (e) {
-      print('운동 계획 참여 중 오류 발생: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('서버와의 연결에 문제가 발생했습니다.')),
-      );
-    }
+    });
   }
+
 
   void _confirmDelete(String planId) {
     showDialog(
