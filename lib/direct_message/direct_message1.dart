@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'direct_message2.dart'; // DirectMessage2를 임포트하세요.
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:provider/provider.dart';
+import '../socket_service.dart';
 
 class DirectMessage1 extends StatefulWidget {
   @override
@@ -15,38 +17,39 @@ class _DirectMessage1State extends State<DirectMessage1> {
   List<Map<String, dynamic>> _searchResults = [];
   String _nickname = ''; // _nickname 속성 추가
   String _userId = ''; // 유저 ID를 저장할 변수 추가
-  IO.Socket? socket;
+  final ScrollController _scrollController = ScrollController();
+
 
   @override
   void initState() {
     super.initState();
-    _initializeSocket();
-    _fetchUserInfo(); // 사용자 정보 조회
-  }
-
-  void _initializeSocket() {
-    // Socket.IO 초기화
-    socket = IO.io('http://localhost:8864', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false, // 필요시 자동 연결 비활성화
-    });
-
-    socket!.connect(); // 소켓 연결
-    socket!.on('connect', (_) {
-      print('Socket connected: ${socket!.id}');
-    });
-
-    socket!.on('disconnect', (_) {
-      print('Socket disconnected');
-    });
-
-    socket!.on('connect_error', (data) {
-      print('Socket connection error: $data');
+    _fetchUserInfo();
+    final socketService = Provider.of<SocketService>(context, listen: false);
+    socketService.connect();
+    socketService.on('chatRoomCreated', (data) {
+      // 소켓 이벤트 리스너를 설정
+      if (mounted) {
+        String chatRoomId = data['chatRoomId'];
+        // Navigating to DirectMessage2 should only happen if the widget is still mounted
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DirectMessage2(
+              chatRoomId: chatRoomId,
+              userId: _userId,
+              receiverId: data['receiverId'],
+            ),
+          ),
+        );
+      }
     });
   }
+
   @override
   void dispose() {
-    _searchController.dispose(); // 텍스트 컨트롤러 해제
+    final socketService = Provider.of<SocketService>(context, listen: false);
+    socketService.off('chatRoomCreated'); // 이벤트 해제
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -65,9 +68,11 @@ class _DirectMessage1State extends State<DirectMessage1> {
       final Map<String, dynamic> userData = jsonDecode(response.body);
 
       if (userData['success']) {
-        setState(() {
-          _nickname = userData['nickname'] ?? 'Unknown'; // 기본값 제공
-        });
+        if (mounted) {
+          setState(() {
+            _nickname = userData['nickname'] ?? 'Unknown'; // 기본값 제공
+          });
+        }
       } else {
         print('사용자 정보 조회 실패: ${userData['message']}');
       }
@@ -92,14 +97,16 @@ class _DirectMessage1State extends State<DirectMessage1> {
 
     if (response.statusCode == 200) {
       final List<dynamic> responseData = jsonDecode(response.body);
-      setState(() {
-        _searchResults = responseData.map((item) {
-          return {
-            'nickname': item['nickname'] ?? '닉네임 없음',
-            'id': item['_id'] ?? '아이디 없음', // ID를 사용
-          };
-        }).toList();
-      });
+      if (mounted) {
+        setState(() {
+          _searchResults = responseData.map((item) {
+            return {
+              'nickname': item['nickname'] ?? '닉네임 없음',
+              'id': item['_id'] ?? '아이디 없음', // ID를 사용
+            };
+          }).toList();
+        });
+      }
     } else {
       print('검색 실패: ${response.statusCode}');
     }
@@ -130,28 +137,32 @@ class _DirectMessage1State extends State<DirectMessage1> {
   }
 
   void _navigateToDirectMessage2(String receiverId) async {
-    String? userId = await _getUserIdByNickname(_nickname); // 닉네임으로 사용자 ID 조회
+    String? userId = await _getUserIdByNickname(_nickname);
     print('userId: $userId, receiverId: $receiverId');
 
     if (userId != null && receiverId.isNotEmpty) {
-      // Socket.IO로 채팅방 생성 요청
-      socket?.emit('createChatRoom', {'senderId': userId, 'receiverId': receiverId});
+      final socketService = Provider.of<SocketService>(context, listen: false);
 
-      socket?.on('chatRoomCreated', (data) {
-        String chatRoomId = data['chatRoomId']; // 서버로부터 받은 채팅방 ID
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DirectMessage2(
-              chatRoomId: chatRoomId, // 생성된 채팅방 ID 전달
-              userId: userId, // 내 ID 전달
-              receiverId: receiverId, // 상대방 ID 전달
+      socketService.off('chatRoomCreated');
+      // 소켓으로 채팅방 생성 요청
+      socketService.emit('createChatRoom', {'senderId': userId, 'receiverId': receiverId});
+
+      socketService.on('chatRoomCreated', (data) {
+        String chatRoomId = data['chatRoomId'];
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DirectMessage2(
+                chatRoomId: chatRoomId,
+                userId: userId,
+                receiverId: receiverId,
+              ),
             ),
-          ),
-        );
+          );
+        }
       });
     } else {
-      // 오류 처리: ID가 비어있는 경우
       print('유효하지 않은 ID: userId: $userId, receiverId: $receiverId');
     }
   }

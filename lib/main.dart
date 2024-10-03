@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:quest/add_plan/add_planning.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'main_screen.dart';
@@ -12,9 +13,17 @@ import 'login_activity/signup.dart'; // 회원가입1 페이지 import
 import 'add_plan/add_exercise_list.dart';
 import 'direct_message/direct_message1.dart';
 import 'direct_message/direct_message2.dart';
+import './socket_service.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SocketService(),),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -27,7 +36,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainScreenWithFooter(), // 로그인 여부에 관계없이 항상 MainScreenWithFooter 표시
+      home: MainScreenWithFooter(),
       routes: {
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),

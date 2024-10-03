@@ -1,6 +1,7 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // 타임스탬프 포맷을 위한 패키지
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../socket_service.dart'; // Ensure this import is correct
 
 class DirectMessage2 extends StatefulWidget {
   final String chatRoomId;
@@ -18,7 +19,6 @@ class DirectMessage2 extends StatefulWidget {
 }
 
 class _DirectMessage2State extends State<DirectMessage2> {
-  late IO.Socket socket;
   final List<Map<String, dynamic>> _messages = [];
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -26,74 +26,80 @@ class _DirectMessage2State extends State<DirectMessage2> {
   @override
   void initState() {
     super.initState();
-    _connectSocket();
-  }
+    final socketService = Provider.of<SocketService>(context, listen: false);
 
-  void _connectSocket() {
-    socket = IO.io('http://localhost:8864', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
-
-    socket.connect();
-
-    socket.emit('joinChatRoom', {
+    // Join the chat room
+    socketService.emit('joinChatRoom', {
       'chatRoomId': widget.chatRoomId,
       'senderId': widget.userId,
-      'receiverId': widget.receiverId,
     });
 
-    socket.on('receiveMessage', _handleReceivedMessage);
-    socket.on('existingMessages', _handleExistingMessages);
+    if (socketService.isConnected) {
+      socketService.on('receiveMessage', _handleReceivedMessage);
+      socketService.on('existingMessages', _handleExistingMessages);
+    } else {
+      // Optionally, you can handle the case when the socket is not connected
+      print('Socket is not connected, cannot register event listeners.');
+    }
   }
 
   void _handleReceivedMessage(data) {
-    // 수신한 메시지를 리스트에 추가
-    final newMessage = {
-      '_id': data['_id'] ?? '',
-      'senderId': data['senderId'] ?? '',
-      'message': data['message'] ?? '',
-      'isMe': data['senderId'] == widget.userId,
-      'timestamp': DateTime.tryParse(data['timestamp']) ?? DateTime.now(),
-    };
+    try {
+      final newMessage = {
+        '_id': data['_id'] ?? '',
+        'senderId': data['senderId'] ?? '',
+        'message': data['message'] ?? '',
+        'isMe': data['senderId'] == widget.userId,
+        'timestamp': DateTime.tryParse(data['timestamp']) ?? DateTime.now(),
+      };
 
-    // 중복 체크: 이미 메시지가 있는지 확인
-    if (!_messages.any((msg) => msg['_id'] == newMessage['_id'])) {
-      setState(() {
-        _messages.add(newMessage);
-      });
-      _scrollToBottom();
+      if (!_messages.any((msg) => msg['_id'] == newMessage['_id'])) {
+        if (mounted) {
+          setState(() {
+            _messages.add(newMessage);
+          });
+          _scrollToBottom();
+        }
+      }
+    } catch (e) {
+      print('Error handling received message: $e');
     }
   }
 
   void _handleExistingMessages(data) {
-    setState(() {
-      for (var message in data) {
-        if (message != null) {
-          final existingMessage = {
-            '_id': message['_id'] ?? '',
-            'senderId': message['senderId'] ?? '',
-            'message': message['message'] ?? '',
-            'isMe': message['senderId'] == widget.userId,
-            'timestamp': message['timestamp'] != null
-                ? DateTime.tryParse(message['timestamp']) ?? DateTime.now()
-                : DateTime.now(),
-          };
+    try {
+      if (mounted) {
+        setState(() {
+          for (var message in data) {
+            if (message != null) {
+              final existingMessage = {
+                '_id': message['_id'] ?? '',
+                'senderId': message['senderId'] ?? '',
+                'message': message['message'] ?? '',
+                'isMe': message['senderId'] == widget.userId,
+                'timestamp': message['timestamp'] != null
+                    ? DateTime.tryParse(message['timestamp']) ?? DateTime.now()
+                    : DateTime.now(),
+              };
 
-          // 중복 체크: 이미 메시지가 있는지 확인
-          if (!_messages.any((msg) => msg['_id'] == existingMessage['_id'])) {
-            _messages.add(existingMessage);
+              if (!_messages.any((msg) => msg['_id'] == existingMessage['_id'])) {
+                _messages.add(existingMessage);
+              }
+            }
           }
-        }
+          _scrollToBottom();
+        });
       }
-      _scrollToBottom();
-    });
+    } catch (e) {
+      print('Error handling existing messages: $e');
+    }
   }
 
 
   void _sendMessage() {
     final message = _messageController.text.trim();
     if (message.isNotEmpty) {
+      final socketService = Provider.of<SocketService>(context, listen: false);
       final messageData = {
         'chatRoomId': widget.chatRoomId,
         'senderId': widget.userId,
@@ -102,10 +108,7 @@ class _DirectMessage2State extends State<DirectMessage2> {
         'timestamp': DateTime.now().toIso8601String(),
       };
 
-      // 서버에 메시지 전송
-      socket.emit('sendMessage', messageData);
-
-      // 메시지를 서버로 보낸 후 리스트에 추가하지 않음
+      socketService.emit('sendMessage', messageData);
       _messageController.clear();
       _scrollToBottom();
     }
@@ -113,17 +116,25 @@ class _DirectMessage2State extends State<DirectMessage2> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      if (mounted) { // mounted 체크
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
     });
   }
 
+
   @override
   void dispose() {
-    socket.off('receiveMessage', _handleReceivedMessage);
-    socket.off('existingMessages', _handleExistingMessages);
-    socket.emit('leaveChatRoom', {'chatRoomId': widget.chatRoomId});
-    socket.dispose();
+    final socketService = Provider.of<SocketService>(context, listen: false);
+    socketService.off('receiveMessage', _handleReceivedMessage);
+    socketService.off('existingMessages', _handleExistingMessages);
+    _leaveChatRoom();
     super.dispose();
+  }
+
+  void _leaveChatRoom() {
+    final socketService = Provider.of<SocketService>(context, listen: false);
+    socketService.emit('leaveChatRoom', {'chatRoomId': widget.chatRoomId});
   }
 
   String _formatTimestamp(DateTime timestamp) {
@@ -142,7 +153,16 @@ class _DirectMessage2State extends State<DirectMessage2> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Direct Message')),
+      appBar: AppBar(
+        title: Text('Direct Message'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            _leaveChatRoom();
+            Navigator.pop(context); // 이전 페이지로 돌아가기
+          },
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -218,3 +238,4 @@ class _DirectMessage2State extends State<DirectMessage2> {
     );
   }
 }
+

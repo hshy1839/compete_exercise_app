@@ -5,19 +5,27 @@ class SocketService extends ChangeNotifier {
   late IO.Socket socket;
 
   SocketService() {
+    _initializeSocket();
+  }
+
+  void _initializeSocket() {
     socket = IO.io('http://localhost:8864', {
       'transports': ['websocket'],
       'autoConnect': true,
     });
 
     socket.onConnect((_) {
-      print('소켓 연결됨');
+      print('Socket connected');
       notifyListeners();
     });
 
     socket.onDisconnect((_) {
-      print('소켓 연결 해제됨');
+      print('Socket disconnected');
       notifyListeners();
+    });
+
+    socket.on('connect_error', (data) {
+      print('Socket connection error: $data');
     });
   }
 
@@ -29,17 +37,17 @@ class SocketService extends ChangeNotifier {
     socket.disconnect();
   }
 
-  // 이벤트 리스너 메서드 추가
-  void on(String event, Function callback) {
-    socket.on(event, callback());
+  void emit(String event, dynamic data) {
+    socket.emit(event, data);
   }
 
-  void onConnect(Function callback) {
-    socket.onConnect((_) => callback());
+  void on(String event, Function(dynamic) callback) {
+    socket.on(event, callback);
   }
 
-  void onDisconnect(Function callback) {
-    socket.onDisconnect((_) => callback());
+  void off(String event, [Function(dynamic)? callback]) {
+    socket.off(event, callback);
   }
 
+  bool get isConnected => socket.connected; // Add a getter for connection status
 }

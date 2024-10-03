@@ -11,71 +11,34 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  late IO.Socket socket;
   List<Map<String, dynamic>> exercisePlans = [];
   String? currentUserNickname;
   String? currentUserId; // 현재 사용자 ID 추가
-  late IO.Socket socket;
 
   @override
   void initState() {
     super.initState();
     _fetchUserInfo();
+    _fetchExercisePlans(); // 운동 계획 가져오기 호출
     _initializeSocket();
   }
-
   void _initializeSocket() {
-    SharedPreferences.getInstance().then((prefs) {
-      final token = prefs.getString('token') ?? '';
+    socket = IO.io('http://localhost:8864', IO.OptionBuilder()
+        .setTransports(['websocket']) // for Flutter or Dart VM
+        .disableAutoConnect() // disable automatic connection
+        .build());
 
-      // Socket.IO 클라이언트 초기화
-      socket = IO.io('http://localhost:8864', <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-        'query': {
-          'token': token, // JWT 토큰을 쿼리 매개변수로 전달
-        },
-      });
+    socket.connect(); // manually connect the socket
 
-      socket.connect();
+    socket.onConnect((_) {
+      print('Connected to server');
+    });
 
-      socket.onConnect((_) {
-        print('Socket.IO에 연결되었습니다.');
-
-        // 운동 계획 요청
-        socket.emit('getExercisePlans', token); // 서버에 운동 계획 요청
-
-        // 서버에서 exercisePlans 이벤트를 수신하여 데이터 업데이트
-        socket.on('exercisePlansResponse', (data) {
-          setState(() {
-            if (data['success']) {
-              exercisePlans = (data['plans'] as List).map((plan) {
-                return {
-                  'id': plan['_id'] ?? '',
-                  'nickname': plan['nickname'] ?? '알 수 없는 사용자',
-                  'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
-                  'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
-                  'selected_participants': plan['selected_participants'] ?? '0',
-                  'participants': plan['participants'] ?? [],
-                  'selected_startTime': plan['selected_startTime'] ?? '알 수 없는 시작 시간',
-                  'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
-                  'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
-                  'profilePic': plan['profilePic'] ?? '',
-                };
-              }).toList();
-            } else {
-              print('운동 계획 로드 실패: ${data['message']}');
-            }
-          });
-        });
-      });
-
-      socket.onDisconnect((_) {
-        print('Socket.IO에 연결이 끊어졌습니다.');
-      });
+    socket.onDisconnect((_) {
+      print('Disconnected from server');
     });
   }
-
-
   Future<void> _fetchUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -102,8 +65,47 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  Future<void> _fetchExercisePlans() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8864/api/users/planinfo'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          exercisePlans = (data['plans'] as List).map((plan) {
+            return {
+              'id': plan['_id'] ?? '',
+              'nickname': plan['nickname'] ?? '알 수 없는 사용자',
+              'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
+              'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
+              'selected_participants': plan['selected_participants'] ?? '0',
+              'participants': plan['participants'] ?? [],
+              'selected_startTime': plan['selected_startTime'] ?? '알 수 없는 시작 시간',
+              'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
+              'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
+              'profilePic': plan['profilePic'] ?? '',
+            };
+          }).toList();
+        });
+      } else {
+        print('운동 계획을 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('운동 계획을 가져오는 중 오류 발생: $e');
+    }
+  }
+
   Future<void> _refresh() async {
     // Refresh logic (optional)
+    await _fetchExercisePlans(); // 운동 계획 새로 고침
   }
 
   Future<void> _deleteExercisePlan(String planId) async {
@@ -145,9 +147,11 @@ class _MainScreenState extends State<MainScreen> {
     final token = prefs.getString('token') ?? '';
 
     if (token.isEmpty || currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('참여 요청을 보낼 수 없습니다.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('참여 요청을 보낼 수 없습니다.')),
+        );
+      }
       return;
     }
 
@@ -159,19 +163,19 @@ class _MainScreenState extends State<MainScreen> {
 
     // 서버에서 참여 응답을 수신
     socket.on('participateResponse', (data) {
-      if (data['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('참여 요청이 성공적으로 전송되었습니다.')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('참여 요청 실패: ${data['message']}')),
-        );
+      if (mounted) {
+        if (data['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('참여 요청이 성공적으로 전송되었습니다.')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('참여 요청 실패: ${data['message']}')),
+          );
+        }
       }
     });
   }
-
-
   void _confirmDelete(String planId) {
     showDialog(
       context: context,
@@ -220,12 +224,6 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    socket.dispose(); // Socket.IO 소켓 종료
-    super.dispose();
   }
 
   @override
