@@ -26,32 +26,36 @@ class _DirectMessage1State extends State<DirectMessage1> {
     _fetchUserInfo();
     final socketService = Provider.of<SocketService>(context, listen: false);
     socketService.connect();
-    socketService.on('chatRoomCreated', (data) {
-      // 소켓 이벤트 리스너를 설정
-      if (mounted) {
-        String chatRoomId = data['chatRoomId'];
-        // Navigating to DirectMessage2 should only happen if the widget is still mounted
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DirectMessage2(
-              chatRoomId: chatRoomId,
-              userId: _userId,
-              receiverId: data['receiverId'],
-            ),
-          ),
-        );
-      }
-    });
+
+    // 소켓 이벤트 리스너를 설정
+    socketService.on('chatRoomCreated', _onChatRoomCreated);
+  }
+
+  // 이벤트 핸들러 메서드로 분리
+  void _onChatRoomCreated(data) {
+    if (!mounted) return;
+
+    String chatRoomId = data['chatRoomId'];
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DirectMessage2(
+          chatRoomId: chatRoomId,
+          userId: _userId,
+          receiverId: data['receiverId'],
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
     final socketService = Provider.of<SocketService>(context, listen: false);
-    socketService.off('chatRoomCreated'); // 이벤트 해제
+    socketService.off('chatRoomCreated', _onChatRoomCreated); // 이벤트 해제
     _searchController.dispose();
     super.dispose();
   }
+
 
   Future<void> _fetchUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
