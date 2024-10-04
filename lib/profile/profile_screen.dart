@@ -15,12 +15,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _postCount = 0; // 게시물 수
   int _followersCount = 0; // 팔로워 수
   int _followingCount = 0; // 팔로잉 수
+  List<Map<String, dynamic>> exercisePlans = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUserInfo();
+    _fetchExercisePlans();
   }
+
+  Future<void> _fetchExercisePlans() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8864/api/users/planinfo'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          exercisePlans = (data['plans'] as List).map((plan) {
+            return {
+              'id': plan['_id'] ?? '',
+              'nickname': plan['nickname'] ?? '알 수 없는 사용자',
+              'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
+              'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
+              'selected_participants': plan['selected_participants'] ?? '0',
+              'participants': plan['participants'] ?? [],
+              'selected_startTime': plan['selected_startTime'] ?? '알 수 없는 시작 시간',
+              'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
+              'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
+            };
+          }).toList();
+        });
+      } else {
+        print('운동 계획을 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('운동 계획을 가져오는 중 오류 발생: $e');
+    }
+  }
+
 
   Future<void> _fetchUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
@@ -102,6 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+
           SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -112,8 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _postCount.toString(), // 게시물 수
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  Text('Posts',
-                      style: TextStyle(color: Colors.white)),
+                  Text('Posts', style: TextStyle(color: Colors.white)),
                 ],
               ),
               SizedBox(width: 40),
@@ -123,8 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _followersCount.toString(), // 팔로워 수
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  Text('Followers',
-                      style: TextStyle(color: Colors.white)),
+                  Text('Followers', style: TextStyle(color: Colors.white)),
                 ],
               ),
               SizedBox(width: 40),
@@ -134,14 +173,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _followingCount.toString(), // 팔로잉 수
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  Text('Following',
-                      style: TextStyle(color: Colors.white)),
+                  Text('Following', style: TextStyle(color: Colors.white)),
                 ],
               ),
             ],
           ),
           SizedBox(height: 20),
-          // 프로필 수정 및 로그아웃 버튼 추가
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -150,38 +187,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: ElevatedButton(
                   onPressed: _navigateToEditProfile,
-                  child: Text('Edit Profile',
-                    style: TextStyle(color: Colors.white),),
+                  child: Text('Edit Profile', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // 버튼 배경 색상
+                    backgroundColor: Colors.blue,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0), // 사각형 버튼의 모서리 반경
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 16.0), // 버튼의 상하 패딩
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
                   ),
                 ),
               ),
-              SizedBox(width: 20), // 버튼 사이 마진
+              SizedBox(width: 20),
               Container(
                 width: 120,
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: ElevatedButton(
                   onPressed: _logout,
-                  child: Text('Logout',
-                    style: TextStyle(color: Colors.white),),
+                  child: Text('Logout', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // 버튼 배경 색상
+                    backgroundColor: Colors.red,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0), // 사각형 버튼의 모서리 반경
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 16.0), // 버튼의 상하 패딩
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
                   ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 20),
-          // 게시물 추가 영역을 여기에 배치할 수 있습니다.
+          // 운동 계획 목록
+          Expanded(
+            child: ListView.builder(
+              itemCount: exercisePlans.length,
+              itemBuilder: (context, index) {
+                final plan = exercisePlans[index];
+                return Card(
+                  color: Colors.grey[850],
+                  margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '운동 계획: ${plan['selected_exercise']}',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          '참여자: ${plan['selected_participants']}명',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Text(
+                          '위치: ${plan['selected_location']}',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Text(
+                          '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
