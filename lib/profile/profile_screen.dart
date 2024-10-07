@@ -49,7 +49,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
               'selected_participants': plan['selected_participants'] ?? '0',
               'participants': plan['participants'] ?? [],
-              'selected_startTime': plan['selected_startTime'] ?? '알 수 없는 시작 시간',
+              'selected_startTime': plan['selected_startTime'] ??
+                  '알 수 없는 시작 시간',
               'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
               'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
               'userId': plan['userId'] ?? '', // 만든 사람의 ID 추가
@@ -303,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${plan['nickname']}님의 계획', // 수정된 부분
+              '${plan['nickname']}님의 계획',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -331,9 +332,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
               '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
               style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
+            SizedBox(height: 10),
+            // 내가 참여한 계획일 때만 '참여 해제' 버튼 표시
+            if (plan['participants'] != null && (plan['participants'] as List).contains(currentUserId))
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _showLeaveConfirmationDialog(context, plan['id']);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red, // 버튼 색상
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: Text('참여 해제', style: TextStyle(color: Colors.white)),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+
+// 참여 해제 확인 대화상자 UI
+  void _showLeaveConfirmationDialog(BuildContext context, String planId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('참여 해제'),
+          content: Text('정말로 이 계획에서 참여 해제 하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                _leavePlan(planId);
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _leavePlan(String planId) {
+    // Socket.IO를 통해 참여 해제 요청
+    SocketService().socket.emit('leave_plan', {
+      'userId': currentUserId,
+      'planId': planId,
+    });
   }
 }
