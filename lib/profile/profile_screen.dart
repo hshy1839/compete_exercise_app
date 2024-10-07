@@ -391,5 +391,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'userId': currentUserId,
       'planId': planId,
     });
+
+    // 참여 해제가 성공했을 때 SnackBar 표시
+    _showSnackBar('참여가 해제되었습니다!');
+    setState(() {
+      exercisePlans.removeWhere((plan) => plan['id'] == planId);
+    });
+  }
+
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      duration: Duration(seconds: 2),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
