@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'header.dart'; // Header 위젯을 import합니다.
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import './add_plan/existing_plan_screen.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -15,6 +16,9 @@ class _MainScreenState extends State<MainScreen> {
   List<Map<String, dynamic>> exercisePlans = [];
   String? currentUserNickname;
   String? currentUserId; // 현재 사용자 ID 추가
+  List<dynamic> followers = [];
+  List<dynamic> following = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -56,6 +60,8 @@ class _MainScreenState extends State<MainScreen> {
         setState(() {
           currentUserNickname = data['nickname']; // 로그인한 사용자의 닉네임 설정
           currentUserId = data['_id']; // 로그인한 사용자의 ID 설정
+          followers = data['followers'];
+          following = data['following'];
         });
       } else {
         print('사용자 정보를 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
@@ -83,6 +89,7 @@ class _MainScreenState extends State<MainScreen> {
           exercisePlans = (data['plans'] as List).map((plan) {
             return {
               'id': plan['_id'] ?? '',
+              'userId': plan['userId'] ?? '',
               'nickname': plan['nickname'] ?? '알 수 없는 사용자',
               'selected_date': plan['selected_date'] ?? '알 수 없는 날짜',
               'selected_exercise': plan['selected_exercise'] ?? '알 수 없는 운동',
@@ -94,12 +101,23 @@ class _MainScreenState extends State<MainScreen> {
               'profilePic': plan['profilePic'] ?? '',
             };
           }).toList();
+
+          exercisePlans = exercisePlans.where((plan) {
+            return following.contains(plan['userId']);
+          }).toList();
+          isLoading = false;
         });
-      } else {
+      }else {
         print('운동 계획을 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
+        setState(() {
+          isLoading = false; // 로딩 완료
+        });
       }
     } catch (e) {
       print('운동 계획을 가져오는 중 오류 발생: $e');
+      setState(() {
+        isLoading = false; // 로딩 완료
+      });
     }
   }
 
@@ -228,6 +246,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Colors.black, // 전체 배경 색상 설정
       body: RefreshIndicator(
@@ -236,10 +255,25 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             Header(), // Header 위젯 추가
             Expanded(
-              child: ListView.builder(
+              child: isLoading // 로딩 중일 때 처리
+                  ? Center(
+                child: CircularProgressIndicator(), // 로딩 인디케이터
+              )
+                  : exercisePlans.where((plan) => !plan['participants'].contains(currentUserId)).isEmpty
+                  ? Center(
+                child: Text(
+                  '현재 친구들의 계획이 없어요',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
+                ),
+              )
+                  : ListView.builder(
                 itemCount: exercisePlans.length,
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
+
                   final isCurrentUserPlan = currentUserNickname == plan['nickname'];
 
                   // 현재 사용자 ID가 participants 배열에 포함되어 있는지 확인
@@ -247,67 +281,81 @@ class _MainScreenState extends State<MainScreen> {
                     return SizedBox.shrink(); // 참여 중인 계획은 렌더링하지 않음
                   }
 
-                  return Card(
-                    color: Colors.grey[900], // 리스트 아이템 배경 색상 설정
-                    margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${plan['nickname']}님의 계획', // 수정된 부분
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+
+                  return GestureDetector(
+                    onTap: () {
+                      // 운동 계획 ID와 함께 ExistingPlanScreen으로 이동
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ExistingPlanScreen(
+                            planId: plan['id'], // planId를 전달
+                            nickname: plan['nickname'], // nickname을 전달
+                          ),
+                          ),
+                      );
+                    },
+                    child: Card(
+                      color: Colors.grey[900], // 리스트 아이템 배경 색상 설정
+                      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${plan['nickname']}님의 계획', // 수정된 부분
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    _confirmDelete(plan['id']);
-                                  },
-                                ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            '운동: ${plan['selected_exercise']}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '날짜: ${plan['selected_date']}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '시작 시간: ${plan['selected_startTime']}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '종료 시간: ${plan['selected_endTime']}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '장소: ${plan['selected_location']}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: () {
-                              _showParticipationDialog(plan['id']); // 참여 다이얼로그 표시
-                            },
-                            child: Text('참여하기'),
-                          ),
-                        ],
+                                if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () {
+                                      _confirmDelete(plan['id']);
+                                    },
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              '운동: ${plan['selected_exercise']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '날짜: ${plan['selected_date']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '시작 시간: ${plan['selected_startTime']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '종료 시간: ${plan['selected_endTime']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '장소: ${plan['selected_location']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                _showParticipationDialog(plan['id']); // 참여 다이얼로그 표시
+                              },
+                              child: Text('참여하기'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

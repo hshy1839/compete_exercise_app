@@ -96,6 +96,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushNamed(context, '/edit_profile'); // 프로필 수정 페이지로 이동
   }
 
+  Future<void> _deleteExercisePlan(String planId) async {
+    if (planId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('삭제할 계획이 없습니다.')),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:8864/api/users/planning/$planId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          exercisePlans.removeWhere((plan) => plan['id'] == planId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('운동 계획이 삭제되었습니다.')),
+        );
+      } else {
+        print('운동 계획 삭제에 실패했습니다. 상태 코드: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('운동 계획 삭제 중 오류 발생: $e');
+    }
+  }
+
+  void _confirmDelete(String planId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('삭제 확인', style: TextStyle(color: Colors.black)),
+        content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+            },
+            child: Text('아니요', style: TextStyle(color: Colors.black)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              _deleteExercisePlan(planId); // 삭제 요청
+            },
+            child: Text('예', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false); // 로그아웃 처리
@@ -295,6 +354,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildPlanCard(Map<String, dynamic> plan) {
+    final bool isCurrentUserPlan = plan['userId'] == currentUserId;
+
     return Card(
       color: Colors.grey[850],
       margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
@@ -311,6 +372,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
+              IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  _confirmDelete(plan['id']);
+                },
+              ),
             Text(
               '운동: ${plan['selected_exercise']}',
               style: TextStyle(fontSize: 18, color: Colors.white),
@@ -384,6 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+
 
   void _leavePlan(String planId) {
     // Socket.IO를 통해 참여 해제 요청
