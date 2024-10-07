@@ -186,6 +186,9 @@ class _MainScreenState extends State<MainScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('참여 요청이 성공적으로 전송되었습니다.')),
           );
+          setState(() {
+            exercisePlans.removeWhere((plan) => plan['id'] == planId);
+          });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('참여 요청 실패: ${data['message']}')),
