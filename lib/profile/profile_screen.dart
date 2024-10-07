@@ -16,6 +16,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _followersCount = 0; // 팔로워 수
   int _followingCount = 0; // 팔로잉 수
   List<Map<String, dynamic>> exercisePlans = [];
+  String? currentUserId;
+  bool showCreatedPlans = true; // true면 내가 만든 기록, false면 내가 참여한 기록
 
   @override
   void initState() {
@@ -50,6 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'selected_startTime': plan['selected_startTime'] ?? '알 수 없는 시작 시간',
               'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
               'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
+              'userId': plan['userId'] ?? '', // 만든 사람의 ID 추가
             };
           }).toList();
         });
@@ -60,7 +63,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('운동 계획을 가져오는 중 오류 발생: $e');
     }
   }
-
 
   Future<void> _fetchUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
@@ -77,9 +79,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final responseData = jsonDecode(response.body);
       setState(() {
         _nickname = responseData['nickname'] ?? 'Unknown User';
-        _postCount = responseData['postCount'] ?? 0; // 게시물 수
-        _followersCount = responseData['followersCount'] ?? 0; // 팔로워 수
-        _followingCount = responseData['followingCount'] ?? 0; // 팔로잉 수
+        _postCount = responseData['postCount'] ?? 0;
+        _followersCount = responseData['followersCount'] ?? 0;
+        _followingCount = responseData['followingCount'] ?? 0;
+        currentUserId = responseData['_id'];
       });
     } else {
       setState(() {
@@ -134,7 +137,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Text(
                         _nickname,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                       ),
                     ],
                   ),
@@ -142,7 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-
           SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -150,8 +155,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 children: [
                   Text(
-                    _postCount.toString(), // 게시물 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    _postCount.toString(),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   Text('Posts', style: TextStyle(color: Colors.white)),
                 ],
@@ -160,8 +168,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 children: [
                   Text(
-                    _followersCount.toString(), // 팔로워 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    _followersCount.toString(),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   Text('Followers', style: TextStyle(color: Colors.white)),
                 ],
@@ -170,8 +181,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 children: [
                   Text(
-                    _followingCount.toString(), // 팔로잉 수
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    _followingCount.toString(),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   Text('Following', style: TextStyle(color: Colors.white)),
                 ],
@@ -187,7 +201,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: ElevatedButton(
                   onPressed: _navigateToEditProfile,
-                  child: Text('Edit Profile', style: TextStyle(color: Colors.white)),
+                  child: Text('Edit Profile',
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     shape: RoundedRectangleBorder(
@@ -203,7 +218,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: ElevatedButton(
                   onPressed: _logout,
-                  child: Text('Logout', style: TextStyle(color: Colors.white)),
+                  child:
+                  Text('Logout', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     shape: RoundedRectangleBorder(
@@ -216,45 +232,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: showCreatedPlans ? Colors.blue : Colors.grey,
+                  size: 40,
+                ),
+                onPressed: () {
+                  setState(() {
+                    showCreatedPlans = true;
+                  });
+                },
+                tooltip: '내가 만든 기록',
+              ),
+              SizedBox(width: 20),
+              IconButton(
+                icon: Icon(
+                  Icons.group,
+                  color: !showCreatedPlans ? Colors.blue : Colors.grey,
+                  size: 40,
+                ),
+                onPressed: () {
+                  setState(() {
+                    showCreatedPlans = false;
+                  });
+                },
+                tooltip: '내가 참여한 기록',
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
           // 운동 계획 목록
           Expanded(
             child: ListView.builder(
               itemCount: exercisePlans.length,
               itemBuilder: (context, index) {
                 final plan = exercisePlans[index];
-                return Card(
-                  color: Colors.grey[850],
-                  margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '운동 계획: ${plan['selected_exercise']}',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          '참여자: ${plan['selected_participants']}명',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        Text(
-                          '위치: ${plan['selected_location']}',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        Text(
-                          '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+
+                if (showCreatedPlans) {
+                  // 내가 만든 기록
+                  if (plan['userId'] == currentUserId) {
+                    return _buildPlanCard(plan);
+                  }
+                } else {
+                  // 내가 참여한 기록
+                  if (plan['participants'] != null &&
+                      (plan['participants'] as List).contains(currentUserId)) {
+                    return _buildPlanCard(plan);
+                  }
+                }
+                return SizedBox.shrink();
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlanCard(Map<String, dynamic> plan) {
+    return Card(
+      color: Colors.grey[850],
+      margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${plan['nickname']}님의 계획', // 수정된 부분
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '운동: ${plan['selected_exercise']}',
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+            SizedBox(height: 5),
+            Text(
+              '날짜: ${plan['selected_date']}',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            Text(
+              '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            Text(
+              '위치: ${plan['selected_location']}',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            Text(
+              '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+          ],
+        ),
       ),
     );
   }
