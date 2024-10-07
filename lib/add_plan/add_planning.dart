@@ -14,6 +14,10 @@ class _AddPlanningState extends State<AddPlanning> {
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
   final _locationController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _searchResults = [];
+  List<Map<String, dynamic>> participants = []; // List to store participants
+  bool _isPrivateSearch = false;
 
   TimeOfDay _startTime = TimeOfDay.now();
   TimeOfDay _endTime = TimeOfDay.now();
@@ -24,11 +28,46 @@ class _AddPlanningState extends State<AddPlanning> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Retrieve arguments safely in didChangeDependencies
     final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
     if (arguments != null) {
       _selectedDate = arguments['date'];
       _exerciseType = arguments['exercise'];
+    }
+  }
+
+  Future<void> _searchNickname() async {
+    final query = _searchController.text.trim();
+
+    if (query.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('http://localhost:8864/api/users/search?nickname=$query'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = jsonDecode(response.body);
+      setState(() {
+        _searchResults = responseData.map((item) {
+          return {
+            'nickname': item['nickname'] ?? '닉네임 없음',
+            'id': item['_id'] ?? '아이디 없음',
+            'isFollowing': item['isFollowing'] ?? false
+          };
+        }).toList();
+      });
+    } else {
+      print('검색 실패: ${response.statusCode}');
     }
   }
 
@@ -58,30 +97,36 @@ class _AddPlanningState extends State<AddPlanning> {
   }
 
   Future<void> _submitPlanning() async {
-    final url = 'http://localhost:8864/api/users/planning'; // Replace with your server URL
+    if (_participantsController.text.isEmpty || participants.isEmpty || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('모든 필드를 입력하세요.')),
+      );
+      return;
+    }
 
-    // Get JWT token from SharedPreferences
+    final url = 'http://localhost:8864/api/users/planning';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     final headers = {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token', // Add token to Authorization header
+      if (token != null) 'Authorization': 'Bearer $token',
     };
 
     final body = jsonEncode({
       'selected_date': _selectedDate?.toIso8601String(),
       'selected_exercise': _exerciseType,
-      'selected_participants': _participantsController.text,
+      'selected_participants': participants.length, // Use participants count
       'selected_startTime': _startTimeController.text,
       'selected_endTime': _endTimeController.text,
       'selected_location': _locationController.text,
+      'participants': participants.map((p) => p['id']).toList(),
+      'isPrivate': _isPrivateSearch // Include the privacy setting
     });
 
     try {
       final response = await http.post(Uri.parse(url), headers: headers, body: body);
       if (response.statusCode == 200) {
-        // Handle successful response
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -98,25 +143,38 @@ class _AddPlanningState extends State<AddPlanning> {
           ),
         );
       } else {
-        // Handle error response
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit planning')),
+          SnackBar(content: Text('Failed to submit planning: ${response.statusCode}')),
         );
       }
     } catch (e) {
-      // Handle network or other errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     }
   }
 
+  void _addParticipant(Map<String, dynamic> user) {
+    setState(() {
+      participants.add(user);
+      _searchResults.removeWhere((item) => item['id'] == user['id']);
+      _participantsController.text = participants.length.toString(); // Update participants count
+    });
+  }
+
+  void _removeParticipant(String userId) {
+    setState(() {
+      participants.removeWhere((user) => user['id'] == userId);
+      _participantsController.text = participants.length.toString(); // Update participants count
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60.0), // Set height for the header
-        child: Header(), // Use the Header widget
+        preferredSize: Size.fromHeight(60.0),
+        child: Header(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -145,6 +203,7 @@ class _AddPlanningState extends State<AddPlanning> {
             TextField(
               controller: _participantsController,
               keyboardType: TextInputType.number,
+              readOnly: true, // Make this field read-only
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: '몇명인지 입력하세요',
@@ -193,31 +252,76 @@ class _AddPlanningState extends State<AddPlanning> {
               ),
             ),
             SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '공개 여부: ${_isPrivateSearch ? "Private" : "Public"}',
+                  style: TextStyle(fontSize: 18),
+                ),
+                Switch(
+                  value: _isPrivateSearch,
+                  onChanged: (value) {
+                    setState(() {
+                      _isPrivateSearch = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            Text(
+              '참가자 추가',
+              style: TextStyle(fontSize: 18),
+            ),
+            TextField(
+              controller: _searchController,
+              onChanged: (_) => _searchNickname(),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Search by nickname',
+              ),
+            ),
+            SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  final user = _searchResults[index];
+                  return ListTile(
+                    title: Text(user['nickname']),
+                    trailing: IconButton(
+                      icon: Icon(Icons.add),
+                      onPressed: () => _addParticipant(user),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: participants.length,
+                itemBuilder: (context, index) {
+                  final participant = participants[index];
+                  return ListTile(
+                    title: Text(participant['nickname']),
+                    trailing: IconButton(
+                      icon: Icon(Icons.remove),
+                      onPressed: () => _removeParticipant(participant['id']),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submitPlanning,
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50), // Make button width full width
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero, // Square corners
-                ),
-              ),
-              child: Text(
-                'Submit',
-                style: TextStyle(fontSize: 18),
-              ),
+              child: Text('제출하기'),
             ),
           ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _participantsController.dispose();
-    _startTimeController.dispose();
-    _endTimeController.dispose();
-    _locationController.dispose();
-    super.dispose();
   }
 }

@@ -55,7 +55,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
       appBar: AppBar(
         title: Text('운동 계획 세부 정보'),
         elevation: 0, // 그림자 제거
-        backgroundColor: Colors.teal, // 앱 바 색상 변경
+        backgroundColor: Colors.white, // 앱 바 색상 변경
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -72,7 +72,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
                 children: [
                   Text(
                     '${planDetails!['nickname']}님의 계획',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.teal),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   SizedBox(height: 20),
                   _buildInfoRow('운동:', planDetails!['selected_exercise']),

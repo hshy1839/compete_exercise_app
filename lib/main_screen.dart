@@ -103,7 +103,7 @@ class _MainScreenState extends State<MainScreen> {
           }).toList();
 
           exercisePlans = exercisePlans.where((plan) {
-            return following.contains(plan['userId']);
+            return following.contains(plan['userId']) || plan['userId'] == currentUserId;
           }).toList();
           isLoading = false;
         });
@@ -352,10 +352,14 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             SizedBox(height: 10),
                             ElevatedButton(
-                              onPressed: () {
+                              onPressed: isCurrentUserPlan|| plan['participants'].length >= plan['selected_participants']
+                                  ? null // 자신의 계획이면 버튼 비활성화
+                                  : () {
                                 _showParticipationDialog(plan['id']); // 참여 다이얼로그 표시
                               },
-                              child: Text('참여하기'),
+                              child: isCurrentUserPlan
+                                  ? SizedBox.shrink() // 자신의 계획이면 버튼을 숨김
+                                  : Text('참여하기'),
                             ),
                           ],
                         ),
