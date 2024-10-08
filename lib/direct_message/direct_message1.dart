@@ -50,9 +50,6 @@ class _DirectMessage1State extends State<DirectMessage1> {
 
   @override
   void dispose() {
-    final socketService = Provider.of<SocketService>(context, listen: false);
-    socketService.off('chatRoomCreated', _onChatRoomCreated); // 이벤트 해제
-    _searchController.dispose();
     super.dispose();
   }
 

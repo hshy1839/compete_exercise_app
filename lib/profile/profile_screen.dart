@@ -170,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey.shade100,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0),
         child: Header(),
@@ -200,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                            color: Colors.black),
                       ),
                     ],
                   ),
@@ -219,9 +219,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                        color: Colors.black),
                   ),
-                  Text('Posts', style: TextStyle(color: Colors.white)),
+                  Text('Posts', style: TextStyle(color: Colors.black)),
                 ],
               ),
               SizedBox(width: 40),
@@ -232,9 +232,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                        color: Colors.black),
                   ),
-                  Text('Followers', style: TextStyle(color: Colors.white)),
+                  Text('Followers', style: TextStyle(color: Colors.black)),
                 ],
               ),
               SizedBox(width: 40),
@@ -245,9 +245,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                        color: Colors.black),
                   ),
-                  Text('Following', style: TextStyle(color: Colors.white)),
+                  Text('Following', style: TextStyle(color: Colors.black)),
                 ],
               ),
             ],
@@ -357,8 +357,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final bool isCurrentUserPlan = plan['userId'] == currentUserId;
 
     return Card(
-      color: Colors.grey[850],
-      margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+      color: Colors.white,
+      margin: EdgeInsets.symmetric(vertical: 3.0, horizontal: 20.0),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -367,7 +367,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               '${plan['nickname']}님의 계획',
               style: TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -380,25 +380,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
             Text(
-              '운동: ${plan['selected_exercise']}',
-              style: TextStyle(fontSize: 18, color: Colors.white),
+              '종류: ${plan['selected_exercise']}',
+              style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             SizedBox(height: 5),
             Text(
               '날짜: ${plan['selected_date']}',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             Text(
               '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             Text(
               '위치: ${plan['selected_location']}',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             Text(
               '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             SizedBox(height: 10),
             // 내가 참여한 계획일 때만 '참여 해제' 버튼 표시

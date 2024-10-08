@@ -10,10 +10,10 @@ class SocketService extends ChangeNotifier {
   }
 
   void _initializeSocket() {
-    socket = IO.io('http://localhost:8864', {
-      'transports': ['websocket'],
-      'autoConnect': true,
-    });
+    socket = IO.io('http://localhost:8864', IO.OptionBuilder()
+        .setTransports(['websocket'])
+        .disableAutoConnect() // 자동 연결 비활성화
+        .build());
 
     socket.onConnect((_) {
       print('Socket connected');
@@ -48,6 +48,11 @@ class SocketService extends ChangeNotifier {
 
   void off(String event, [Function(dynamic)? callback]) {
     socket.off(event, callback);
+  }
+  @override
+  void dispose() {
+    socket.disconnect(); // 소켓 연결 해제
+    super.dispose();
   }
 
   bool get isConnected => socket.connected; // Add a getter for connection status

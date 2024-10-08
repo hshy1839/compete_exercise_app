@@ -123,9 +123,6 @@ class _DirectMessage2State extends State<DirectMessage2> {
 
   @override
   void dispose() {
-    final socketService = Provider.of<SocketService>(context, listen: false);
-    socketService.off('receiveMessage', _handleReceivedMessage);
-    socketService.off('existingMessages', _handleExistingMessages);
     _leaveChatRoom(); // Leave chat room
     super.dispose();
   }

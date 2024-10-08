@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import './direct_message/direct_message1.dart'; // 경로에 맞게 수정하세요.
+import './direct_message/direct_message1.dart';
+import 'notification_screen.dart'; // 경로에 맞게 수정하세요.
 
 class Header extends StatelessWidget {
   @override
@@ -29,7 +30,10 @@ class Header extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.notifications_outlined, color: Colors.black),
                   onPressed: () {
-                    // 알림 아이콘 클릭 시 동작
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NotificationScreen()),
+                    );
                   },
                 ),
                 SizedBox(width: 10), // 아이콘 간격
