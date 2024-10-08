@@ -287,6 +287,9 @@ class _MainScreenState extends State<MainScreen> {
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
 
+                  if (plan['participants'].contains(currentUserId)) {
+                    return SizedBox.shrink(); // 아무것도 렌더링하지 않음
+                  }
                   final isCurrentUserPlan = currentUserNickname == plan['nickname'];
 
                   // 현재 사용자 ID가 participants 배열에 포함되어 있는지 확인
