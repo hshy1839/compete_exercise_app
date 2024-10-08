@@ -10,7 +10,7 @@ class AddPlanning extends StatefulWidget {
 }
 
 class _AddPlanningState extends State<AddPlanning> {
-  final _participantsController = TextEditingController();
+  final _participantsCountController = TextEditingController();
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
   final _locationController = TextEditingController();
@@ -97,7 +97,7 @@ class _AddPlanningState extends State<AddPlanning> {
   }
 
   Future<void> _submitPlanning() async {
-    if (_participantsController.text.isEmpty || participants.isEmpty || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty) {
+    if (_participantsCountController.text.isEmpty || participants.isEmpty || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('모든 필드를 입력하세요.')),
       );
@@ -116,12 +116,12 @@ class _AddPlanningState extends State<AddPlanning> {
     final body = jsonEncode({
       'selected_date': _selectedDate?.toIso8601String(),
       'selected_exercise': _exerciseType,
-      'selected_participants': participants.length, // Use participants count
+      'selected_participants': _participantsCountController.text, // 참가자 수를 입력된 값으로 전달
       'selected_startTime': _startTimeController.text,
       'selected_endTime': _endTimeController.text,
       'selected_location': _locationController.text,
       'participants': participants.map((p) => p['id']).toList(),
-      'isPrivate': _isPrivateSearch // Include the privacy setting
+      'isPrivate': _isPrivateSearch
     });
 
     try {
@@ -158,14 +158,12 @@ class _AddPlanningState extends State<AddPlanning> {
     setState(() {
       participants.add(user);
       _searchResults.removeWhere((item) => item['id'] == user['id']);
-      _participantsController.text = participants.length.toString(); // Update participants count
     });
   }
 
   void _removeParticipant(String userId) {
     setState(() {
       participants.removeWhere((user) => user['id'] == userId);
-      _participantsController.text = participants.length.toString(); // Update participants count
     });
   }
 
@@ -201,12 +199,11 @@ class _AddPlanningState extends State<AddPlanning> {
               style: TextStyle(fontSize: 18),
             ),
             TextField(
-              controller: _participantsController,
-              keyboardType: TextInputType.number,
-              readOnly: true, // Make this field read-only
+              controller: _participantsCountController,
+              keyboardType: TextInputType.number, // 숫자 키보드 타입 사용
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: '몇명인지 입력하세요',
+                hintText: '참가자 수를 입력하세요',
               ),
             ),
             SizedBox(height: 20),
@@ -290,15 +287,20 @@ class _AddPlanningState extends State<AddPlanning> {
                   final user = _searchResults[index];
                   return ListTile(
                     title: Text(user['nickname']),
-                    trailing: IconButton(
-                      icon: Icon(Icons.add),
+                    subtitle: Text(user['isFollowing'] ? 'Following' : 'Not Following'),
+                    trailing: ElevatedButton(
+                      child: Text('Add'),
                       onPressed: () => _addParticipant(user),
                     ),
                   );
                 },
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
+            Text(
+              'Added Participants',
+              style: TextStyle(fontSize: 18),
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: participants.length,
@@ -307,7 +309,7 @@ class _AddPlanningState extends State<AddPlanning> {
                   return ListTile(
                     title: Text(participant['nickname']),
                     trailing: IconButton(
-                      icon: Icon(Icons.remove),
+                      icon: Icon(Icons.remove_circle),
                       onPressed: () => _removeParticipant(participant['id']),
                     ),
                   );
@@ -315,9 +317,11 @@ class _AddPlanningState extends State<AddPlanning> {
               ),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _submitPlanning,
-              child: Text('제출하기'),
+            Center(
+              child: ElevatedButton(
+                child: Text('Submit Planning'),
+                onPressed: _submitPlanning,
+              ),
             ),
           ],
         ),

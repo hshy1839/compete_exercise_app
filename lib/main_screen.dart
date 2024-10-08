@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'header.dart'; // Header 위젯을 import합니다.
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import './add_plan/existing_plan_screen.dart';
+import 'package:intl/intl.dart';
 
 class MainScreen extends StatefulWidget {
   @override
@@ -99,6 +100,7 @@ class _MainScreenState extends State<MainScreen> {
               'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
               'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
               'profilePic': plan['profilePic'] ?? '',
+              'isPrivate': plan['isPrivate'] ?? '',
             };
           }).toList();
 
@@ -201,7 +203,7 @@ class _MainScreenState extends State<MainScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('삭제 확인', style: TextStyle(color: Colors.black)),
+        title: Text('삭제 확인', style: TextStyle(color: Colors.white)),
         content: Text('계획을 삭제하시겠습니까?', style: TextStyle(color: Colors.black)),
         actions: [
           TextButton(
@@ -249,9 +251,8 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      backgroundColor: Colors.black, // 전체 배경 색상 설정
+      backgroundColor: Colors.grey.shade100, // 전체 배경 색상 설정
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: Column(
@@ -267,7 +268,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: Text(
                   '현재 친구들의 계획이 없어요',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 18,
                   ),
                 ),
@@ -284,7 +285,6 @@ class _MainScreenState extends State<MainScreen> {
                     return SizedBox.shrink(); // 참여 중인 계획은 렌더링하지 않음
                   }
 
-
                   return GestureDetector(
                     onTap: () {
                       // 운동 계획 ID와 함께 ExistingPlanScreen으로 이동
@@ -294,27 +294,49 @@ class _MainScreenState extends State<MainScreen> {
                             planId: plan['id'], // planId를 전달
                             nickname: plan['nickname'], // nickname을 전달
                           ),
-                          ),
+                        ),
                       );
                     },
                     child: Card(
-                      color: Colors.grey[900], // 리스트 아이템 배경 색상 설정
-                      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                      color: Colors.white, // 리스트 아이템 배경 색상 설정
+                      margin: EdgeInsets.symmetric(vertical: 5, horizontal: 30),
                       child: Padding(
-                        padding: const EdgeInsets.all(15.0),
+                        padding: const EdgeInsets.all(35.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  '${plan['nickname']}님의 계획', // 수정된 부분
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${plan['nickname']}님의 계획',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    // isPrivate 값이 true일 때 자물쇠 아이콘과 텍스트 추가
+                                    if (plan['isPrivate'] == true) ...[
+                                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                                      Icon(
+                                        Icons.lock, // 자물쇠 아이콘
+                                        color: Colors.green, // 초록색
+                                        size: 15,
+                                      ),
+                                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                                      Text(
+                                        'private',
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
                                   IconButton(
@@ -327,32 +349,32 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             SizedBox(height: 10),
                             Text(
-                              '운동: ${plan['selected_exercise']}',
-                              style: TextStyle(color: Colors.white),
+                              '종류: ${plan['selected_exercise']}',
+                              style: TextStyle(color: Colors.black),
                             ),
                             Text(
-                              '날짜: ${plan['selected_date']}',
-                              style: TextStyle(color: Colors.white),
+                              '날짜: ${DateFormat('yyyy년 MM월 dd일').format(DateTime.parse(plan['selected_date']))}', // 날짜 형식 설정
+                              style: TextStyle(color: Colors.black),
                             ),
                             Text(
                               '시작 시간: ${plan['selected_startTime']}',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: Colors.black),
                             ),
                             Text(
                               '종료 시간: ${plan['selected_endTime']}',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: Colors.black),
                             ),
                             Text(
                               '장소: ${plan['selected_location']}',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: Colors.black),
                             ),
                             Text(
                               '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: Colors.black),
                             ),
                             SizedBox(height: 10),
                             ElevatedButton(
-                              onPressed: isCurrentUserPlan|| plan['participants'].length >= plan['selected_participants']
+                              onPressed: isCurrentUserPlan || plan['participants'].length >= plan['selected_participants']
                                   ? null // 자신의 계획이면 버튼 비활성화
                                   : () {
                                 _showParticipationDialog(plan['id']); // 참여 다이얼로그 표시
@@ -374,4 +396,5 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+
 }
