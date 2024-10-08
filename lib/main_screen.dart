@@ -105,6 +105,9 @@ class _MainScreenState extends State<MainScreen> {
           }).toList();
 
           exercisePlans = exercisePlans.where((plan) {
+            if (plan['userId'] == currentUserId) {
+              return true;
+            }
             // isPrivate가 true일 경우 participants에 userId가 있는지 확인
             if (plan['isPrivate'] == true) {
               return plan['participants'].contains(currentUserId);
@@ -287,7 +290,7 @@ class _MainScreenState extends State<MainScreen> {
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
 
-                  if (plan['participants'].contains(currentUserId)) {
+                  if (plan['participants'].contains(currentUserId) ) {
                     return SizedBox.shrink(); // 아무것도 렌더링하지 않음
                   }
                   final isCurrentUserPlan = currentUserNickname == plan['nickname'];
