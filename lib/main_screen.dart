@@ -341,13 +341,6 @@ class _MainScreenState extends State<MainScreen> {
                                     ],
                                   ],
                                 ),
-                                if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
-                                  IconButton(
-                                    icon: Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () {
-                                      _confirmDelete(plan['id']);
-                                    },
-                                  ),
                               ],
                             ),
                             SizedBox(height: 10),
@@ -376,15 +369,22 @@ class _MainScreenState extends State<MainScreen> {
                               style: TextStyle(color: Colors.black),
                             ),
                             SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: isCurrentUserPlan || plan['participants'].length >= plan['selected_participants']
-                                  ? null // 자신의 계획이면 버튼 비활성화
-                                  : () {
-                                _showParticipationDialog(plan['id']); // 참여 다이얼로그 표시
-                              },
-                              child: isCurrentUserPlan
-                                  ? SizedBox.shrink() // 자신의 계획이면 버튼을 숨김
-                                  : Text('참여하기'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // 본인이 아닌 경우에만 "참여하기" 버튼 표시
+                                if (
+                                !isCurrentUserPlan && plan['participants'].length < plan['selected_participants'])
+                                  TextButton(
+                                    onPressed: () => _showParticipationDialog(plan['id']), // 참여 요청 다이얼로그 호출
+                                    child: Text('참여하기', style: TextStyle(color: Colors.blue)),
+                                  ),
+                                if(isCurrentUserPlan)
+                                TextButton(
+                                  onPressed: () => _confirmDelete(plan['id']), // 삭제 요청 다이얼로그 호출
+                                  child: Text('삭제', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
