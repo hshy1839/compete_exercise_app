@@ -259,11 +259,14 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100, // 전체 배경 색상 설정
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(60.0),
+        child: Header(),
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: Column(
-          children: [
-            Header(), // Header 위젯 추가
+          children: [ // Header 위젯 추가
             Expanded(
               child: isLoading // 로딩 중일 때 처리
                   ? Center(

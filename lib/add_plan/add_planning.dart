@@ -97,7 +97,7 @@ class _AddPlanningState extends State<AddPlanning> {
   }
 
   Future<void> _submitPlanning() async {
-    if (_participantsCountController.text.isEmpty || participants.isEmpty || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty) {
+    if (_participantsCountController.text.isEmpty || (_isPrivateSearch && participants.isEmpty) || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('모든 필드를 입력하세요.')),
       );
@@ -267,61 +267,62 @@ class _AddPlanningState extends State<AddPlanning> {
               ],
             ),
             SizedBox(height: 20),
-            Text(
-              '참가자 추가',
-              style: TextStyle(fontSize: 18),
-            ),
-            TextField(
-              controller: _searchController,
-              onChanged: (_) => _searchNickname(),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Search by nickname',
+            if (_isPrivateSearch) ...[
+              Text(
+                '참가자 추가',
+                style: TextStyle(fontSize: 18),
               ),
-            ),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  final user = _searchResults[index];
-                  return ListTile(
-                    title: Text(user['nickname']),
-                    subtitle: Text(user['isFollowing'] ? 'Following' : 'Not Following'),
-                    trailing: ElevatedButton(
-                      child: Text('Add'),
-                      onPressed: () => _addParticipant(user),
-                    ),
-                  );
+              TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  _searchNickname();
                 },
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: '검색할 닉네임 입력',
+                ),
               ),
-            ),
+              SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    final user = _searchResults[index];
+                    return ListTile(
+                      title: Text(user['nickname']),
+                      trailing: IconButton(
+                        icon: Icon(Icons.add),
+                        onPressed: () => _addParticipant(user),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                '선택된 참가자:',
+                style: TextStyle(fontSize: 18),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: participants.length,
+                  itemBuilder: (context, index) {
+                    final participant = participants[index];
+                    return ListTile(
+                      title: Text(participant['nickname']),
+                      trailing: IconButton(
+                        icon: Icon(Icons.remove),
+                        onPressed: () => _removeParticipant(participant['id']),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
             SizedBox(height: 20),
-            Text(
-              'Added Participants',
-              style: TextStyle(fontSize: 18),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: participants.length,
-                itemBuilder: (context, index) {
-                  final participant = participants[index];
-                  return ListTile(
-                    title: Text(participant['nickname']),
-                    trailing: IconButton(
-                      icon: Icon(Icons.remove_circle),
-                      onPressed: () => _removeParticipant(participant['id']),
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                child: Text('Submit Planning'),
-                onPressed: _submitPlanning,
-              ),
+            ElevatedButton(
+              onPressed: _submitPlanning,
+              child: Text('Submit'),
             ),
           ],
         ),
