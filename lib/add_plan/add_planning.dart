@@ -172,231 +172,299 @@ class _AddPlanningState extends State<AddPlanning> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0),
         child: Header(),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(0.0),
-        child: ListView( // ListView로 변경하여 스크롤 가능하게 함
-          children: [
-            Container(
-              width: double.infinity, // 화면의 가로 크기를 꽉 채움
-              height: 250.0,         // 세로 크기를 250으로 설정
-              decoration: BoxDecoration(
-                color: Color(0xFF25c387),    // 배경색
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(10.0)), // 하단 모서리에만 둥근 테두리 추가
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft, // 왼쪽 하단에 정렬
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0), // Padding for better spacing
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // 세로 중앙 정렬
-                    crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
-                    children: [
-                      SizedBox(height: 60,),
-                      Text(
-                        '세부 항목을 입력하세요',
-                        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
-                      ), //
-                      SizedBox(height: 20,),
-                      Text(
-                        '선택된 날짜 ',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade100),
-                      ),
-                      Text(
-                        '${_selectedDate?.toLocal().toString().split(' ')[0] ?? 'N/A'}',
-                        style: TextStyle(fontSize: 15, color: Colors.white),
-                      ),
-                      Text(
-                        '선택된 약속 종류',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade100),
-                      ),
-                      Text(
-                        ' ${_exerciseType ?? 'N/A'}',
-                        style: TextStyle(fontSize: 15, color: Colors.white),
-                      ),
-                    ],
-                  ),
+      body: ListView(
+        padding: const EdgeInsets.all(0.0), // 전체 화면에 대한 패딩 추가
+        children: [
+          // 특정 Container (패딩 없음)
+          Container(
+            width: double.infinity,
+            height: 250.0,
+            decoration: BoxDecoration(
+              color: Color(0xFF25c387),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(10.0)),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0), // 패딩을 0으로 조정
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 60),
+                    Text(
+                      '세부 항목을 입력하세요',
+                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      '선택된 날짜 ',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade100),
+                    ),
+                    Text(
+                      '${_selectedDate?.toLocal().toString().split(' ')[0] ?? 'N/A'}',
+                      style: TextStyle(fontSize: 15, color: Colors.white),
+                    ),
+                    Text(
+                      '선택된 약속 종류',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade100),
+                    ),
+                    Text(
+                      ' ${_exerciseType ?? 'N/A'}',
+                      style: TextStyle(fontSize: 15, color: Colors.white),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
 
-            SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // 흰색 배경
-                borderRadius: BorderRadius.circular(8.0), // 둥근 모서리
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4.0,
-                    spreadRadius: 2.0,
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16.0), // Padding for better spacing
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '계획제목',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  TextField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: '제목을 입력하세요',
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '참가자 수',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  TextField(
-                    controller: _participantsCountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: '참가자 수를 입력하세요',
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '시작시간',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  TextField(
-                    controller: _startTimeController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Select start time',
-                      suffixIcon: Icon(Icons.access_time),
-                    ),
-                    onTap: () => _selectTime(context, true),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '종료시간',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  TextField(
-                    controller: _endTimeController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Select end time',
-                      suffixIcon: Icon(Icons.access_time),
-                    ),
-                    onTap: () => _selectTime(context, false),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    '장소',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  TextField(
-                    controller: _locationController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Enter location',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '공개 여부: ${_isPrivateSearch ? "Private" : "Public"}',
-                  style: TextStyle(fontSize: 18),
-                ),
-                Switch(
-                  value: _isPrivateSearch,
-                  onChanged: (value) {
-                    setState(() {
-                      _isPrivateSearch = value;
-                    });
-                  },
+          SizedBox(height: 20), // Container와 다음 요소 간의 간격
+          _buildTextField('계획제목', _titleController, '제목을 입력하세요'),
+          SizedBox(height: 20),
+          _buildTextField('참가자 수', _participantsCountController, '참가자 수를 입력하세요', keyboardType: TextInputType.number),
+          SizedBox(height: 20),
+          _buildReadOnlyTextField('시작시간', _startTimeController, 'Select start time', () => _selectTime(context, true)),
+          SizedBox(height: 20),
+          _buildReadOnlyTextField('종료시간', _endTimeController, 'Select end time', () => _selectTime(context, false)),
+          SizedBox(height: 20),
+          _buildTextField('장소', _locationController, 'Enter location'),
+          SizedBox(height: 20),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.0), // 양옆에 16의 마진 추가
+            decoration: BoxDecoration(
+              color: Colors.white, // 배경색을 흰색으로 설정
+              borderRadius: BorderRadius.circular(8), // 모서리를 둥글게 설정 (선택사항)
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.7), // 그림자 색상
+                  spreadRadius: 2, // 그림자 퍼짐 정도
+                  blurRadius: 5, // 그림자 흐림 정도
+                  offset: Offset(0, 3), // 그림자의 위치
                 ),
               ],
             ),
-            SizedBox(height: 20),
-            if (_isPrivateSearch) ...[
-              Text(
-                '참가자 추가',
-                style: TextStyle(fontSize: 18),
-              ),
-              TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  _searchNickname();
-                },
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: '검색할 닉네임 입력',
+            padding: EdgeInsets.all(20), // 안쪽 여백
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, // 텍스트 정렬을 왼쪽으로 설정
+                  children: [
+                    Text(
+                      '공개 여부',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${_isPrivateSearch ? "Private" : "Public"}',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(width: 20,),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300), // 애니메이션 지속 시간
+                          child: Icon(
+                            _isPrivateSearch ? Icons.lock : Icons.lock_open, // 조건에 따라 아이콘 선택
+                            color: _isPrivateSearch ? Colors.green : Colors.blue, // 상태에 따른 색상
+                            key: ValueKey<bool>(_isPrivateSearch), // 키를 통해 상태를 식별
+                          ),
+                        ),
+                        SizedBox(width: 20), // 아이콘과 텍스트 사이에 여백 추가
+                        Switch(
+                          value: _isPrivateSearch,
+                          onChanged: (value) {
+                            setState(() {
+                              _isPrivateSearch = value; // 상태 변경
+                            });
+                          },
+                          activeColor: Colors.green,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(height: 10),
-              Container(
-                height: 80, // 적절한 높이 조정
-                child: ListView.builder(
-                  itemCount: _searchResults.length,
-                  itemBuilder: (context, index) {
-                    final user = _searchResults[index];
-                    return ListTile(
-                      title: Text(user['nickname']),
-                      trailing: IconButton(
-                        icon: Icon(Icons.add),
-                        onPressed: () => _addParticipant(user),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 20),
-              Text(
-                '선택된 참가자:',
-                style: TextStyle(fontSize: 10),
-              ),
-              Container(
-                height: 50, // 적절한 높이 조정
-                child: ListView.builder(
-                  itemCount: participants.length,
-                  itemBuilder: (context, index) {
-                    final participant = participants[index];
-                    return ListTile(
-                      title: Text(participant['nickname']),
-                      trailing: IconButton(
-                        icon: Icon(Icons.remove),
-                        onPressed: () => _removeParticipant(participant['id']),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _submitPlanning,
-              child: Text('Submit'),
+                SizedBox(width: 10), // Toggle 버튼과의 간격 조정
+              ],
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: 20),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.0),
+            decoration: BoxDecoration(
+              color: Colors.white, // 배경색을 흰색으로 설정
+              borderRadius: BorderRadius.circular(8), // 모서리를 둥글게 설정 (선택사항)
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.7), // 그림자 색상
+                  spreadRadius: 2, // 그림자 퍼짐 정도
+                  blurRadius: 5, // 그림자 흐림 정도
+                  offset: Offset(0, 3), // 그림자의 위치
+                ),
+              ],
+            ),
+            padding: EdgeInsets.all(20), // 안쪽 여백
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, // 텍스트 정렬을 왼쪽으로 설정
+              children: [
+                if (_isPrivateSearch) ...[
+                  Text(
+                    '참가자 추가',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 20,),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      _searchNickname();
+                    },
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: '검색할 닉네임 입력',
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    height: 80,
+                    child: ListView.builder(
+                      itemCount: _searchResults.length,
+                      itemBuilder: (context, index) {
+                        final user = _searchResults[index];
+                        return ListTile(
+                          title: Text(user['nickname']),
+                          trailing: IconButton(
+                            icon: Icon(Icons.add),
+                            onPressed: () => _addParticipant(user),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '선택된 참가자:',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                    height: 50,
+                    child: ListView.builder(
+                      itemCount: participants.length,
+                      itemBuilder: (context, index) {
+                        final participant = participants[index];
+                        return ListTile(
+                          title: Text(participant['nickname']),
+                          trailing: IconButton(
+                            icon: Icon(Icons.remove),
+                            onPressed: () => _removeParticipant(participant['id']),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          SizedBox(height: 20),
+          Container(
+            height: 50,
+            margin: EdgeInsets.symmetric(horizontal: 16.0), // 양옆에 16의 마진 추가
+            child: ElevatedButton(
+              onPressed: _submitPlanning,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // 배경색을 파란색으로 설정
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero, // 모서리 반경을 0으로 설정
+                ),
+              ),
+              child: Text('계획 만들기', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+
+          SizedBox(height: 30),
+        ],
       ),
     );
   }
 
 
 
+
+  Widget _buildTextField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType}) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.0),
+      padding: EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8.0), // Text와 TextField 사이의 간격
+          TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: hint,
+              contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0), // TextField 내부 패딩
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyTextField(String label, TextEditingController controller, String hint, VoidCallback onTap) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.0),
+      padding: EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 18)),
+          SizedBox(height: 8.0), // Text와 TextField 사이의 간격
+          TextField(
+            controller: controller,
+            readOnly: true,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: hint,
+              suffixIcon: Icon(Icons.access_time),
+              contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),// TextField 내부 패딩
+            ),
+            onTap: onTap,
+          ),
+        ],
+      ),
+    );
+  }
 }
