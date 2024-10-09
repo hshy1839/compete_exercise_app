@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert'; // For jsonEncode and jsonDecode
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO; // Socket.IO 패키지 추가
-
+import '../header.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -66,11 +66,14 @@ class _LoginScreenState extends State<LoginScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('성공'),
-            content: Text('로그인 성공!'),
+            title: Text('로그인', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
+            content: Text('환영합니다'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10), // 모서리 반경을 0으로 설정
+            ),
             actions: [
               TextButton(
-                child: Text('확인'),
+                child: Text('확인', style: TextStyle( color: Colors.blueAccent)),
                 onPressed: () {
                   // 메인 화면으로 이동하고 이전 모든 화면 제거
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
@@ -81,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         // 로그인 실패
-        _showErrorDialog(responseData['message'] ?? '로그인 실패. 아이디와 비밀번호를 확인해 주세요.');
+        _showErrorDialog(responseData['message'] ?? 'Error: 500');
       }
     } else {
       // 로그인 실패
@@ -104,11 +107,14 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('실패'),
+        title: Text('로그인 실패', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
         content: Text(message),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // 모서리 반경을 0으로 설정
+        ),
         actions: [
           TextButton(
-            child: Text('확인'),
+            child: Text('확인', style: TextStyle( color: Colors.blueAccent)),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -129,26 +135,47 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text('Login', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black,
-      ),
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start, // 중앙 정렬을 시작으로 변경
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Login Screen',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            // 여기에 주어진 Text 위젯들을 최상단으로 이동
+            SizedBox(height: 150),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // With Me 문구를 대체할 이미지 위젯
+                Image.asset(
+                  'assets/images/app_logo.png', // 이미지 경로
+                  height: 50, // 이미지 높이 조절 (필요에 따라 조정)
+                ),
+                SizedBox(height: 30),
+                Text(
+                  '함께하는 모든 순간 ,',
+                  style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 0),
+                Text(
+                  '손 끝에서 시작되는 약속',
+                  style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-            SizedBox(height: 20),
+            // 문구 아래의 공간을 줄여서 텍스트 필드가 더 위에 나타나도록 설정
+            SizedBox(height: 100), // 필요에 따라 조정
             TextField(
               controller: _usernameController,
               decoration: InputDecoration(
-                labelText: 'Username',
+                labelText: '아이디',
+                labelStyle: TextStyle(color: Colors.grey), // 기본 라벨 색상
                 border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 2), // 클릭 시 테두리 색상을 회색으로 변경
+                ),
+                floatingLabelStyle: TextStyle(color: Colors.grey), // 포커스 시 라벨 색상을 회색으로 변경
               ),
             ),
             SizedBox(height: 20),
@@ -156,25 +183,46 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: '비밀번호',
                 border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 2), // 클릭 시 테두리 색상을 회색으로 변경
+                ),
+                floatingLabelStyle: TextStyle(color: Colors.grey), // 포커스 시 라벨 색상을 회색으로 변경
               ),
             ),
             SizedBox(height: 20),
+            // ElevatedButton 위젯 수정
             ElevatedButton(
               onPressed: _login,
-              child: Text('로그인', style: TextStyle(color: Colors.black)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF25c387), // 버튼 배경색을 #25c387로 설정
+                minimumSize: Size(double.infinity, 56), // 텍스트 필드와 같은 너비와 높이로 설정
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero, // 모서리 반경을 0으로 설정
+                ),
+              ),
+              child: Text('로그인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)), // 텍스트 색상을 흰색으로 설정
             ),
-            SizedBox(height: 20),
+
+            SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/signup');
               },
-              child: Text('회원가입', style: TextStyle(color: Colors.black)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent, // 버튼 배경색을 #25c387로 설정
+                minimumSize: Size(double.infinity, 56), // 텍스트 필드와 같은 너비와 높이로 설정
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero, // 모서리 반경을 0으로 설정
+                ),
+              ),
+              child: Text('회원가입', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
             ),
           ],
         ),
       ),
     );
   }
+
 }
