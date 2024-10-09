@@ -14,6 +14,7 @@ class _AddPlanningState extends State<AddPlanning> {
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
   final _locationController = TextEditingController();
+  final _titleController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
   List<Map<String, dynamic>> participants = []; // List to store participants
@@ -90,6 +91,7 @@ class _AddPlanningState extends State<AddPlanning> {
     }
   }
 
+
   String _formatTimeOfDay(TimeOfDay timeOfDay) {
     final now = DateTime.now();
     final dateTime = DateTime(now.year, now.month, now.day, timeOfDay.hour, timeOfDay.minute);
@@ -97,7 +99,7 @@ class _AddPlanningState extends State<AddPlanning> {
   }
 
   Future<void> _submitPlanning() async {
-    if (_participantsCountController.text.isEmpty || (_isPrivateSearch && participants.isEmpty) || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty) {
+    if (_participantsCountController.text.isEmpty || (_isPrivateSearch && participants.isEmpty) || _startTimeController.text.isEmpty || _endTimeController.text.isEmpty || _locationController.text.isEmpty || _titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('모든 필드를 입력하세요.')),
       );
@@ -116,6 +118,7 @@ class _AddPlanningState extends State<AddPlanning> {
     final body = jsonEncode({
       'selected_date': _selectedDate?.toIso8601String(),
       'selected_exercise': _exerciseType,
+      'planTitle': _titleController.text,
       'selected_participants': _participantsCountController.text, // 참가자 수를 입력된 값으로 전달
       'selected_startTime': _startTimeController.text,
       'selected_endTime': _endTimeController.text,
@@ -136,7 +139,7 @@ class _AddPlanningState extends State<AddPlanning> {
               TextButton(
                 child: Text('확인'),
                 onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                  Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
                 },
               ),
             ],
@@ -169,85 +172,147 @@ class _AddPlanningState extends State<AddPlanning> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0),
         child: Header(),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(0.0),
+        child: ListView( // ListView로 변경하여 스크롤 가능하게 함
           children: [
-            Text(
-              'Plan Your Exercise',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Selected Date: ${_selectedDate?.toLocal().toString().split(' ')[0] ?? 'N/A'}',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Exercise Type: ${_exerciseType ?? 'N/A'}',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 20),
-            Text(
-              '참가자 수',
-              style: TextStyle(fontSize: 18),
-            ),
-            TextField(
-              controller: _participantsCountController,
-              keyboardType: TextInputType.number, // 숫자 키보드 타입 사용
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: '참가자 수를 입력하세요',
+            Container(
+              width: double.infinity, // 화면의 가로 크기를 꽉 채움
+              height: 250.0,         // 세로 크기를 250으로 설정
+              decoration: BoxDecoration(
+                color: Color(0xFF25c387),    // 배경색
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(10.0)), // 하단 모서리에만 둥근 테두리 추가
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft, // 왼쪽 하단에 정렬
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0), // Padding for better spacing
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // 세로 중앙 정렬
+                    crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
+                    children: [
+                      SizedBox(height: 60,),
+                      Text(
+                        '세부 항목을 입력하세요',
+                        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                      ), //
+                      SizedBox(height: 20,),
+                      Text(
+                        '선택된 날짜 ',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade100),
+                      ),
+                      Text(
+                        '${_selectedDate?.toLocal().toString().split(' ')[0] ?? 'N/A'}',
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                      Text(
+                        '선택된 약속 종류',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade100),
+                      ),
+                      Text(
+                        ' ${_exerciseType ?? 'N/A'}',
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
+
             SizedBox(height: 20),
-            Text(
-              '시작시간',
-              style: TextStyle(fontSize: 18),
-            ),
-            TextField(
-              controller: _startTimeController,
-              readOnly: true,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Select start time',
-                suffixIcon: Icon(Icons.access_time),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white, // 흰색 배경
+                borderRadius: BorderRadius.circular(8.0), // 둥근 모서리
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4.0,
+                    spreadRadius: 2.0,
+                  ),
+                ],
               ),
-              onTap: () => _selectTime(context, true),
-            ),
-            SizedBox(height: 20),
-            Text(
-              '종료시간',
-              style: TextStyle(fontSize: 18),
-            ),
-            TextField(
-              controller: _endTimeController,
-              readOnly: true,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Select end time',
-                suffixIcon: Icon(Icons.access_time),
+              padding: EdgeInsets.all(16.0), // Padding for better spacing
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '계획제목',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: '제목을 입력하세요',
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '참가자 수',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  TextField(
+                    controller: _participantsCountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: '참가자 수를 입력하세요',
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '시작시간',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  TextField(
+                    controller: _startTimeController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select start time',
+                      suffixIcon: Icon(Icons.access_time),
+                    ),
+                    onTap: () => _selectTime(context, true),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '종료시간',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  TextField(
+                    controller: _endTimeController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select end time',
+                      suffixIcon: Icon(Icons.access_time),
+                    ),
+                    onTap: () => _selectTime(context, false),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    '장소',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter location',
+                    ),
+                  ),
+                ],
               ),
-              onTap: () => _selectTime(context, false),
             ),
-            SizedBox(height: 20),
-            Text(
-              '장소',
-              style: TextStyle(fontSize: 18),
-            ),
-            TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Enter location',
-              ),
-            ),
+
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -283,7 +348,8 @@ class _AddPlanningState extends State<AddPlanning> {
                 ),
               ),
               SizedBox(height: 10),
-              Expanded(
+              Container(
+                height: 80, // 적절한 높이 조정
                 child: ListView.builder(
                   itemCount: _searchResults.length,
                   itemBuilder: (context, index) {
@@ -301,9 +367,10 @@ class _AddPlanningState extends State<AddPlanning> {
               SizedBox(height: 20),
               Text(
                 '선택된 참가자:',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 10),
               ),
-              Expanded(
+              Container(
+                height: 50, // 적절한 높이 조정
                 child: ListView.builder(
                   itemCount: participants.length,
                   itemBuilder: (context, index) {
@@ -329,4 +396,7 @@ class _AddPlanningState extends State<AddPlanning> {
       ),
     );
   }
+
+
+
 }

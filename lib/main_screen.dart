@@ -101,6 +101,7 @@ class _MainScreenState extends State<MainScreen> {
               'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
               'profilePic': plan['profilePic'] ?? '',
               'isPrivate': plan['isPrivate'] ?? '',
+              'planTitle': plan['planTitle'] ?? '',
             };
           }).toList();
 
@@ -232,6 +233,21 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+  String _calculateDDay(String dateString) {
+    DateTime selectedDate = DateTime.parse(dateString);
+    DateTime today = DateTime.now();
+
+    // D-Day 계산
+    int dDay = selectedDate.difference(today).inDays;
+
+    if (dDay > 0) {
+      return 'D-$dDay'; // 미래의 계획
+    } else if (dDay == 0) {
+      return 'D-Day'; // 오늘
+    } else {
+      return 'D+${-dDay}'; // 과거의 계획
+    }
+  }
 
   void _showParticipationDialog(String planId) {
     showDialog(
@@ -290,12 +306,10 @@ class _MainScreenState extends State<MainScreen> {
                 itemBuilder: (context, index) {
                   final plan = exercisePlans[index];
 
-                  if (plan['participants'].contains(currentUserId) ) {
+                  if (plan['participants'].contains(currentUserId)) {
                     return SizedBox.shrink(); // 아무것도 렌더링하지 않음
                   }
                   final isCurrentUserPlan = currentUserNickname == plan['nickname'];
-
-                  // 현재 사용자 ID가 participants 배열에 포함되어 있는지 확인
 
                   return GestureDetector(
                     onTap: () {
@@ -313,25 +327,40 @@ class _MainScreenState extends State<MainScreen> {
                       color: Colors.white, // 리스트 아이템 배경 색상 설정
                       margin: EdgeInsets.symmetric(vertical: 5, horizontal: 30),
                       child: Padding(
-                        padding: const EdgeInsets.all(35.0),
+                        padding: const EdgeInsets.all(15.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // 날짜와 D-Day 표시
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
                                   children: [
                                     Text(
-                                      '${plan['nickname']}님의 계획',
+                                      '${DateFormat('yyyy.MM.dd').format(DateTime.parse(plan['selected_date']))}',
                                       style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 20,
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ), // 날짜 스타일 설정
+                                    ),
+                                    SizedBox(width: 10), // 날짜와 D-Day 사이의 간격
+                                    // D-Day 계산
+                                    Text(
+                                      _calculateDDay(plan['selected_date']),
+                                      style: TextStyle(
+                                        color: Colors.red, // D-Day 텍스트 색상
+                                        fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    // isPrivate 값이 true일 때 자물쇠 아이콘과 텍스트 추가
-                                    if (plan['isPrivate'] == true) ...[
+                                  ],
+                                ),
+                                // private 아이콘과 텍스트
+                                if (plan['isPrivate'] == true) ...[
+                                  Row(
+                                    children: [
                                       SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
                                       Icon(
                                         Icons.lock, // 자물쇠 아이콘
@@ -348,7 +377,28 @@ class _MainScreenState extends State<MainScreen> {
                                         ),
                                       ),
                                     ],
-                                  ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                            SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${plan['planTitle']}',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${plan['nickname']} 님의 계획',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 18,
+                                  ),
                                 ),
                               ],
                             ),
@@ -358,15 +408,7 @@ class _MainScreenState extends State<MainScreen> {
                               style: TextStyle(color: Colors.black),
                             ),
                             Text(
-                              '날짜: ${DateFormat('yyyy년 MM월 dd일').format(DateTime.parse(plan['selected_date']))}', // 날짜 형식 설정
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            Text(
-                              '시작 시간: ${plan['selected_startTime']}',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            Text(
-                              '종료 시간: ${plan['selected_endTime']}',
+                              '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
                               style: TextStyle(color: Colors.black),
                             ),
                             Text(
@@ -382,17 +424,16 @@ class _MainScreenState extends State<MainScreen> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 // 본인이 아닌 경우에만 "참여하기" 버튼 표시
-                                if (
-                                !isCurrentUserPlan && plan['participants'].length < plan['selected_participants'])
+                                if (!isCurrentUserPlan && plan['participants'].length < plan['selected_participants'])
                                   TextButton(
                                     onPressed: () => _showParticipationDialog(plan['id']), // 참여 요청 다이얼로그 호출
                                     child: Text('참여하기', style: TextStyle(color: Colors.blue)),
                                   ),
-                                if(isCurrentUserPlan)
-                                TextButton(
-                                  onPressed: () => _confirmDelete(plan['id']), // 삭제 요청 다이얼로그 호출
-                                  child: Text('삭제', style: TextStyle(color: Colors.red)),
-                                ),
+                                if (isCurrentUserPlan)
+                                  TextButton(
+                                    onPressed: () => _confirmDelete(plan['id']), // 삭제 요청 다이얼로그 호출
+                                    child: Text('삭제', style: TextStyle(color: Colors.red)),
+                                  ),
                               ],
                             ),
                           ],
@@ -408,5 +449,6 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+
 
 }

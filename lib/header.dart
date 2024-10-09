@@ -16,11 +16,17 @@ class Header extends StatelessWidget {
           // 제목을 왼쪽에 배치
           SizedBox(width: 20),
           Expanded(
-            child: Image.asset(
-              'assets/images/app_logo.png',
-              fit: BoxFit.contain, // 비율을 유지하면서 크기를 조정
-              alignment: Alignment.centerLeft, // 이미지를 왼쪽에 정렬
-              height: 30,
+            child: GestureDetector(
+              onTap: () {
+                // '/main' 경로로 이동
+                Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+              },
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                fit: BoxFit.contain, // 비율을 유지하면서 크기를 조정
+                alignment: Alignment.centerLeft, // 이미지를 왼쪽에 정렬
+                height: 30,
+              ),
             ),
           ),
           // 오른쪽에 아이콘 추가

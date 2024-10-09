@@ -47,6 +47,12 @@ class _SignupScreenState extends State<SignupScreen> {
         });
         return;
       }
+      if (_nicknameController.text.length > 10) {
+        setState(() {
+          _errorMessage = '닉네임은 10자리 이내로 만들어주세요.';
+        });
+        return;
+      }
 
       final response = await http.post(
         Uri.parse('http://localhost:8864/api/users/signup'),
