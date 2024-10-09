@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './direct_message/direct_message1.dart';
-import 'notification_screen.dart'; // 경로에 맞게 수정하세요.
+import 'notification_screen.dart';
+import 'search_screen.dart';
 
 class Header extends StatelessWidget {
   @override
@@ -22,7 +23,7 @@ class Header extends StatelessWidget {
               height: 30,
             ),
           ),
-          // 오른쪽에 DM 아이콘과 로그인 아이콘 추가
+          // 오른쪽에 아이콘 추가
           Padding(
             padding: EdgeInsets.only(right: 20.0), // 오른쪽 마진 추가
             child: Row(
@@ -33,6 +34,17 @@ class Header extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => NotificationScreen()),
+                    );
+                  },
+                ),
+                SizedBox(width: 10), // 아이콘 간격
+                IconButton(
+                  icon: Icon(Icons.search, color: Colors.black), // 검색 아이콘 추가
+                  onPressed: () {
+                    // 검색 아이콘 클릭 시 SearchScreen으로 이동
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SearchScreen()),
                     );
                   },
                 ),

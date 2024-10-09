@@ -24,15 +24,6 @@ class Footer extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(
-              Icons.search,
-              color: selectedIndex == 1 ? Colors.black : Color(0xFF25c387), // 선택된 경우 검은색
-            ),
-            onPressed: () {
-              onTabTapped(1);
-            },
-          ),
-          IconButton(
-            icon: Icon(
               Icons.add_box_outlined,
               color: selectedIndex == 2 ? Colors.black : Color(0xFF25c387), // 선택된 경우 검은색
             ),

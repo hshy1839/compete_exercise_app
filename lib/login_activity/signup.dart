@@ -34,6 +34,20 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _submitData() async {
     if (_formKey.currentState?.validate() ?? false) {
+      // 비밀번호와 비밀번호 확인 비교
+      if (_passwordController.text != _confirmPasswordController.text) {
+        setState(() {
+          _errorMessage = '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
+        });
+        return;
+      }
+      if (_passwordController.text.length < 5) {
+        setState(() {
+          _errorMessage = '비밀번호는 5자리 이상으로 만들어주세요.';
+        });
+        return;
+      }
+
       final response = await http.post(
         Uri.parse('http://localhost:8864/api/users/signup'),
         headers: <String, String>{
@@ -51,11 +65,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-
-        // JWT 추출
         final token = responseData['token'] ?? '';
 
-        // JWT를 SharedPreferences에 저장
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setBool('isLoggedIn', true);
@@ -76,109 +87,87 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('회원가입'),
+        title: Text(''),
+        backgroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(30.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: 'Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(labelText: 'Username'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a username';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _birthdateController,
-                decoration: InputDecoration(labelText: 'Birthdate'),
-                keyboardType: TextInputType.datetime,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your birthdate';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Confirm Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please confirm your password';
-                  }
-                  if (value != _passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _phoneNumberController,
-                decoration: InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _nicknameController,
-                decoration: InputDecoration(labelText: 'Nickname'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a nickname';
-                  }
-                  return null;
-                },
-              ),
-              if (_errorMessage != null) // 에러 메시지가 있을 경우에만 표시
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red), // 빨간 글자 스타일
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 40),
+                Text('회원가입', style: TextStyle(color: Colors.black, fontSize: 40, fontWeight: FontWeight.bold)),
+                SizedBox(height: 15),
+                Text('사용자 정보를 입력하세요.', style: TextStyle(color: Colors.black, fontSize: 20)),
+                SizedBox(height: 70),
+                // Input fields with icons
+                _buildTextField(_nameController, '이름', Icons.person),
+                _buildTextField(_usernameController, '아이디', Icons.person_outline),
+                _buildTextField(_birthdateController, '생일', Icons.calendar_today, keyboardType: TextInputType.datetime),
+                _buildTextField(_passwordController, '비밀번호', Icons.lock, obscureText: true),
+                _buildTextField(_confirmPasswordController, '비밀번호 확인', Icons.lock_outline, obscureText: true),
+                _buildTextField(_phoneNumberController, '전화번호', Icons.phone, keyboardType: TextInputType.phone),
+                _buildTextField(_nicknameController, '닉네임', Icons.star),
+                if (_errorMessage != null) // 에러 메시지가 있을 경우에만 표시
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red), // 빨간 글자 스타일
+                    ),
+                  ),
+
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _submitData,
+                  child: Text('회원가입', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF25c387), // 버튼 색상
+                    padding: EdgeInsets.symmetric(vertical: 25), // 버튼
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero, // 모서리 반경을 0으로 설정
+                    ), // 패딩
+                    textStyle: TextStyle(fontSize: 18), // 버튼 텍스트 크기
                   ),
                 ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submitData,
-                child: Text('Sign Up'),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool obscureText = false, TextInputType keyboardType = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon), // 아이콘 추가
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10), // 테두리 둥글게
+            borderSide: BorderSide(color: Colors.blueAccent),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey, width: 2), // 클릭 시 테두리 색상을 회색으로 변경
+          ),
+          floatingLabelStyle: TextStyle(color: Colors.grey), // 포커스 시 라벨 색상을 회색으로 변경
+        ),
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return '$label을 입력해주세요.';
+          }
+          return null;
+        },
       ),
     );
   }
