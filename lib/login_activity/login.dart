@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Text('확인', style: TextStyle( color: Colors.blueAccent)),
                 onPressed: () {
                   // 메인 화면으로 이동하고 이전 모든 화면 제거
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                  Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
                 },
               ),
             ],

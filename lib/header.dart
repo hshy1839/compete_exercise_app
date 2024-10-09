@@ -6,7 +6,7 @@ class Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100, // 부모 컨테이너의 높이를 늘림
+      height: 80, // 부모 컨테이너의 높이를 늘림
       padding: EdgeInsets.symmetric(vertical: 5.0), // 헤더 높이를 설정
       color: Colors.white,
       child: Row(
@@ -19,6 +19,7 @@ class Header extends StatelessWidget {
               'assets/images/app_logo.png',
               fit: BoxFit.contain, // 비율을 유지하면서 크기를 조정
               alignment: Alignment.centerLeft, // 이미지를 왼쪽에 정렬
+              height: 30,
             ),
           ),
           // 오른쪽에 DM 아이콘과 로그인 아이콘 추가

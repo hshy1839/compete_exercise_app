@@ -19,7 +19,7 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SocketService(),),
+        ChangeNotifierProvider(create: (_) => SocketService()),
       ],
       child: MyApp(),
     ),
@@ -27,8 +27,6 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  get url => null;
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -36,8 +34,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainScreenWithFooter(),
+      home: FutureBuilder<Widget>(
+        future: _determineInitialScreen(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator()); // 로딩 중 표시
+          } else {
+            return snapshot.data!; // 로그인 화면 또는 메인 화면 반환
+          }
+        },
+      ),
       routes: {
+        '/main': (context) => MainScreenWithFooter(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
         '/profile': (context) => ProfileScreen(),
@@ -49,6 +57,16 @@ class MyApp extends StatelessWidget {
       },
     );
   }
+
+  Future<Widget> _determineInitialScreen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    if (isLoggedIn) {
+      return MainScreenWithFooter(); // 로그인 상태면 메인 화면 반환
+    } else {
+      return LoginScreen(); // 로그인 상태가 아니면 로그인 화면 반환
+    }
+  }
 }
 
 class MainScreenWithFooter extends StatefulWidget {
@@ -58,6 +76,7 @@ class MainScreenWithFooter extends StatefulWidget {
 
 class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
   int _currentIndex = 0;
+
   final PageController _pageController = PageController();
 
   final List<Widget> _pages = [
@@ -70,6 +89,7 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
     SignupScreen(),
     EditProfile(),
     DirectMessage1(),
+    MainScreenWithFooter(),
   ];
 
   Future<void> _onTabTapped(int index) async {
@@ -111,7 +131,7 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
         },
         children: _pages,
       ),
-      bottomNavigationBar: Footer(onTabTapped: _onTabTapped),
+      bottomNavigationBar: Footer(onTabTapped: _onTabTapped, selectedIndex: _currentIndex),
     );
   }
 }
