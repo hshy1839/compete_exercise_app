@@ -122,16 +122,30 @@ class _MainScreenWithFooterState extends State<MainScreenWithFooter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        children: _pages,
+      body: RefreshIndicator( // RefreshIndicator 추가
+        onRefresh: _refresh, // 새로 고침 콜백 설정
+        child: PageView(
+          controller: _pageController,
+          physics: NeverScrollableScrollPhysics(),
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          children: _pages,
+        ),
       ),
       bottomNavigationBar: Footer(onTabTapped: _onTabTapped, selectedIndex: _currentIndex),
     );
   }
+
+// 새로 고침 함수 구현
+  Future<void> _refresh() async {
+    // 여기에 데이터를 새로 고침하는 로직을 추가하세요.
+    // 예를 들어, 서버에서 데이터를 가져오거나 상태를 초기화하는 등의 작업을 수행할 수 있습니다.
+    setState(() {
+      // 필요한 상태를 업데이트합니다.
+    });
+  }
+
 }
