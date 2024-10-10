@@ -324,9 +324,29 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       );
                     },
-                    child: Card(
-                      color: Colors.white, // 리스트 아이템 배경 색상 설정
-                      margin: EdgeInsets.symmetric(vertical: 5, horizontal: 30),
+                    child: Container( // 원하는 높이로 설정
+                      margin: EdgeInsets.only(top: 15, left: 20, right: 20), // 양쪽 마진 적용
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          left: BorderSide(
+                            color: Colors.blue, // 왼쪽 경계선 색상
+                            width: 5, // 경계선 두께
+                          ),
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10), // 왼쪽 위 모서리 둥글기
+                          bottomLeft: Radius.circular(10), // 왼쪽 아래 모서리 둥글기
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2), // 그림자 색상
+                            spreadRadius: 1, // 그림자 퍼짐 정도
+                            blurRadius: 5, // 그림자 흐림 정도
+                            offset: Offset(0, 3), // 그림자 위치 (아래로 3만큼 이동)
+                          ),
+                        ],
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(15.0),
                         child: Column(
