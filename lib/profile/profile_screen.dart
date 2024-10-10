@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/planinfo'),
+        Uri.parse('http://43.202.64.70:8864/api/users/planinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://localhost:8864/api/users/userinfo'),
+      Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -112,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:8864/api/users/planning/$planId'),
+        Uri.parse('http://43.202.64.70:8864/api/users/planning/$planId'),
         headers: {
           'Authorization': 'Bearer $token',
         },

@@ -59,7 +59,7 @@ class _DirectMessage1State extends State<DirectMessage1> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://localhost:8864/api/users/userinfo'),
+      Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -90,7 +90,7 @@ class _DirectMessage1State extends State<DirectMessage1> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://localhost:8864/api/users/search?nickname=$query'),
+      Uri.parse('http://43.202.64.70:8864/api/users/search?nickname=$query'),
       headers: {
         'Authorization': 'Bearer $token', // 인증 헤더 추가
       },
@@ -118,7 +118,7 @@ class _DirectMessage1State extends State<DirectMessage1> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://localhost:8864/api/users/search?nickname=$nickname'),
+      Uri.parse('http://43.202.64.70:8864/api/users/search?nickname=$nickname'),
       headers: {
         'Authorization': 'Bearer $token',
       },

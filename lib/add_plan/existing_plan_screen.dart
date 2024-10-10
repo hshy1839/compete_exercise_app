@@ -33,7 +33,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/userinfo'),
+        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -56,7 +56,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
   Future<void> _fetchPlanDetails() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/planinfo/${widget.planId}'),
+        Uri.parse('http://43.202.64.70:8864/api/users/planinfo/${widget.planId}'),
       );
 
       if (response.statusCode == 200) {
@@ -81,7 +81,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
       for (String userId in participantIds) {
         try {
           final response = await http.get(
-            Uri.parse('http://localhost:8864/api/users/userinfo/$userId'),
+            Uri.parse('http://43.202.64.70:8864/api/users/userinfo/$userId'),
           );
 
           if (response.statusCode == 200) {

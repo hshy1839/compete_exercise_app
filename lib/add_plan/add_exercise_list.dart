@@ -22,8 +22,9 @@ class _AddExerciseListState extends State<AddExerciseList> {
         preferredSize: Size.fromHeight(60.0), // Set height for the header
         child: Header(), // Use the Header widget
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(0.0),
+      body: SingleChildScrollView( // Scrollable
+    child: Padding(
+    padding: const EdgeInsets.all(0.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -59,6 +60,7 @@ class _AddExerciseListState extends State<AddExerciseList> {
             _buildCustomExerciseInput(context, selectedDate),
           ],
         ),
+      ),
       ),
     );
   }

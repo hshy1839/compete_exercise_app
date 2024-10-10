@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     // 소켓 초기화
-    socket = IO.io('http://localhost:8864', {
+    socket = IO.io('http://43.202.64.70:8864', {
       'transports': ['websocket'],
       'autoConnect': false,
     });
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     // 로그인 요청을 보낼 URL
-    final url = Uri.parse('http://localhost:8864/api/users/login');
+    final url = Uri.parse('http://43.202.64.70:8864/api/users/login');
 
     // POST 요청을 보내기 위한 데이터
     final response = await http.post(
@@ -136,93 +136,89 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start, // 중앙 정렬을 시작으로 변경
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 여기에 주어진 Text 위젯들을 최상단으로 이동
-            SizedBox(height: 150),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // With Me 문구를 대체할 이미지 위젯
-                Image.asset(
-                  'assets/images/app_logo.png', // 이미지 경로
-                  height: 50, // 이미지 높이 조절 (필요에 따라 조정)
-                ),
-                SizedBox(height: 30),
-                Text(
-                  '함께하는 모든 순간 ,',
-                  style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 0),
-                Text(
-                  '손 끝에서 시작되는 약속',
-                  style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            // 문구 아래의 공간을 줄여서 텍스트 필드가 더 위에 나타나도록 설정
-            SizedBox(height: 100), // 필요에 따라 조정
-            TextField(
-              controller: _usernameController,
-              decoration: InputDecoration(
-                labelText: '아이디',
-                labelStyle: TextStyle(color: Colors.grey), // 기본 라벨 색상
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 2), // 클릭 시 테두리 색상을 회색으로 변경
-                ),
-                floatingLabelStyle: TextStyle(color: Colors.grey), // 포커스 시 라벨 색상을 회색으로 변경
+      body: SingleChildScrollView( // 추가된 부분
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 150),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(
+                    'assets/images/app_logo.png',
+                    height: 50,
+                  ),
+                  SizedBox(height: 30),
+                  Text(
+                    '함께하는 모든 순간 ,',
+                    style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 0),
+                  Text(
+                    '손 끝에서 시작되는 약속',
+                    style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: '비밀번호',
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 2), // 클릭 시 테두리 색상을 회색으로 변경
-                ),
-                floatingLabelStyle: TextStyle(color: Colors.grey), // 포커스 시 라벨 색상을 회색으로 변경
-              ),
-            ),
-            SizedBox(height: 20),
-            // ElevatedButton 위젯 수정
-            ElevatedButton(
-              onPressed: _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF25c387), // 버튼 배경색을 #25c387로 설정
-                minimumSize: Size(double.infinity, 56), // 텍스트 필드와 같은 너비와 높이로 설정
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero, // 모서리 반경을 0으로 설정
+              SizedBox(height: 100),
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: '아이디',
+                  labelStyle: TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 2),
+                  ),
                 ),
               ),
-              child: Text('로그인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)), // 텍스트 색상을 흰색으로 설정
-            ),
-
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/signup');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent, // 버튼 배경색을 #25c387로 설정
-                minimumSize: Size(double.infinity, 56), // 텍스트 필드와 같은 너비와 높이로 설정
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero, // 모서리 반경을 0으로 설정
+              SizedBox(height: 20),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: '비밀번호',
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 2),
+                  ),
                 ),
               ),
-              child: Text('회원가입', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
-            ),
-          ],
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF25c387),
+                  minimumSize: Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: Text('로그인', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/signup');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  minimumSize: Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: Text('회원가입', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
 
 }

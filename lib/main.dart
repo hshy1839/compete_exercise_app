@@ -5,17 +5,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'main_screen.dart';
 import 'search_screen.dart';
 import 'add_plan/add_screen.dart';
-import 'profile/profile_screen.dart';
 import 'profile/edit_profile.dart';
+import 'profile/profile_screen.dart';
 import 'footer.dart';
 import 'login_activity/login.dart'; // 로그인 화면 import
 import 'login_activity/signup.dart'; // 회원가입1 페이지 import
 import 'add_plan/add_exercise_list.dart';
 import 'direct_message/direct_message1.dart';
 import 'direct_message/direct_message2.dart';
+import 'package:flutter/services.dart';
 import './socket_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
   runApp(
     MultiProvider(
       providers: [

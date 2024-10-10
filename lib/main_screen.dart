@@ -29,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
     _initializeSocket();
   }
   void _initializeSocket() {
-    socket = IO.io('http://localhost:8864', IO.OptionBuilder()
+    socket = IO.io('http://43.202.64.70:8864', IO.OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM
         .disableAutoConnect() // disable automatic connection
         .build());
@@ -50,7 +50,7 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/userinfo'),
+        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -78,7 +78,7 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/planinfo'),
+        Uri.parse('http://43.202.64.70:8864/api/users/planinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -152,7 +152,7 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:8864/api/users/planning/$planId'),
+        Uri.parse('http://43.202.64.70:8864/api/users/planning/$planId'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -325,7 +325,7 @@ class _MainScreenState extends State<MainScreen> {
                       );
                     },
                     child: Container( // 원하는 높이로 설정
-                      margin: EdgeInsets.only(top: 15, left: 20, right: 20), // 양쪽 마진 적용
+                      margin: EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10), // 양쪽 마진 적용
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border(

@@ -50,7 +50,7 @@ class _AddPlanningState extends State<AddPlanning> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://localhost:8864/api/users/search?nickname=$query'),
+      Uri.parse('http://43.202.64.70:8864/api/users/search?nickname=$query'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -106,7 +106,7 @@ class _AddPlanningState extends State<AddPlanning> {
       return;
     }
 
-    final url = 'http://localhost:8864/api/users/planning';
+    final url = 'http://43.202.64.70:8864/api/users/planning';
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 

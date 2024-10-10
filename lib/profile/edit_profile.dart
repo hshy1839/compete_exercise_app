@@ -28,7 +28,7 @@ class _EditProfileState extends State<EditProfile> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8864/api/users/userinfo'),
+        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -67,7 +67,7 @@ class _EditProfileState extends State<EditProfile> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:8864/api/users/userinfo'),
+        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
