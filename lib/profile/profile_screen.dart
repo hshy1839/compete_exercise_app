@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../header.dart';
@@ -54,6 +55,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'selected_endTime': plan['selected_endTime'] ?? '알 수 없는 종료 시간',
               'selected_location': plan['selected_location'] ?? '알 수 없는 위치',
               'userId': plan['userId'] ?? '', // 만든 사람의 ID 추가
+              'planTitle': plan['planTitle'] ?? '',
+              'isPrivate': plan['isPrivate'] ?? '',
             };
           }).toList();
         });
@@ -212,19 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Column(
-                children: [
-                  Text(
-                    _postCount.toString(),
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
-                  ),
-                  Text('Posts', style: TextStyle(color: Colors.black)),
-                ],
-              ),
-              SizedBox(width: 40),
+              SizedBox(width: 0),
               Column(
                 children: [
                   Text(
@@ -295,32 +286,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(
-                icon: Icon(
-                  Icons.person,
-                  color: showCreatedPlans ? Colors.blue : Colors.grey,
-                  size: 40,
-                ),
+              TextButton(
                 onPressed: () {
                   setState(() {
                     showCreatedPlans = true;
                   });
                 },
-                tooltip: '내가 만든 기록',
+                child: Text(
+                  '내 약속',
+                  style: TextStyle(
+                    color: showCreatedPlans ? Colors.blue : Colors.grey,
+                    fontWeight: FontWeight.bold,// 색상 설정
+                    fontSize: 16, // 폰트 크기
+                  ),
+                ),
               ),
               SizedBox(width: 20),
-              IconButton(
-                icon: Icon(
-                  Icons.group,
-                  color: !showCreatedPlans ? Colors.blue : Colors.grey,
-                  size: 40,
-                ),
+              TextButton(
                 onPressed: () {
                   setState(() {
                     showCreatedPlans = false;
                   });
                 },
-                tooltip: '내가 참여한 기록',
+                child: Text(
+                  '참여한 약속',
+                  style: TextStyle(
+                    color: !showCreatedPlans ? Colors.blue : Colors.grey, // 색상 설정
+                    fontSize: 16, // 폰트 크기
+                  ),
+                ),
               ),
             ],
           ),
@@ -330,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: ListView.builder(
               itemCount: exercisePlans.length,
               itemBuilder: (context, index) {
-                final plan = exercisePlans[index];
+                final plan = exercisePlans[exercisePlans.length - 1 - index];
 
                 if (showCreatedPlans) {
                   // 내가 만든 기록
@@ -353,8 +347,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+
   Widget _buildPlanCard(Map<String, dynamic> plan) {
     final bool isCurrentUserPlan = plan['userId'] == currentUserId;
+
+    // D-Day 계산
+    DateTime selectedDate = DateTime.parse(plan['selected_date']); // 날짜를 DateTime으로 변환
+    DateTime today = DateTime.now();
+    Duration difference = selectedDate.difference(today);
+    int dDay = difference.inDays; // D-Day 계산
 
     return Card(
       color: Colors.white,
@@ -364,30 +365,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${plan['nickname']}님의 계획',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            // 날짜와 D-Day를 함께 표시
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '${DateFormat('yyyy.MM.dd').format(selectedDate)}', // 날짜 표시
+                      style: TextStyle(
+                        color: Colors.grey, // 색상 설정
+                        fontSize: 12, // 폰트 크기
+                        fontWeight: FontWeight.bold, // 두껍게 설정
+                      ),
+                    ),
+                    SizedBox(width: 8), // 날짜와 D-Day 간의 간격
+                    Text(
+                      dDay > 0
+                          ? 'D-${dDay}' // D-Day가 양수일 경우
+                          : dDay == 0
+                          ? 'D-Day' // D-Day가 0일 경우
+                          : 'D+${-dDay}', // D-Day 표시
+                      style: TextStyle(
+                        color: Colors.red, // D-Day 텍스트 색상
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                // 비공식적인 계획일 경우 자물쇠 아이콘과 텍스트 표시
+                if (plan['isPrivate'] == true) ...[
+                  Row(
+                    children: [
+                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                      Icon(
+                        Icons.lock, // 자물쇠 아이콘
+                        color: Colors.green, // 초록색
+                        size: 15,
+                      ),
+                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                      Text(
+                        'private',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
-            if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
-              IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  _confirmDelete(plan['id']);
-                },
-              ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${plan['planTitle']}',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${plan['nickname']} 님의 계획',
+                  style: TextStyle(
+                    color: Colors.grey, // 회색으로 설정
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 5), // 제목과 다음 텍스트 간격 조절
             Text(
               '종류: ${plan['selected_exercise']}',
               style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             SizedBox(height: 5),
-            Text(
-              '날짜: ${plan['selected_date']}',
-              style: TextStyle(fontSize: 14, color: Colors.black),
-            ),
             Text(
               '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
               style: TextStyle(fontSize: 14, color: Colors.black),
@@ -401,8 +459,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             SizedBox(height: 10),
+            // 삭제 버튼을 최 우측 하단에 정렬
+            if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
+              Align(
+                alignment: Alignment.bottomRight,
+                child: TextButton(
+                  onPressed: () {
+                    _confirmDelete(plan['id']);
+                  },
+                  child: Text(
+                    '삭제',
+                    style: TextStyle(
+                      color: Colors.red, // 빨간색 글씨
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             // 내가 참여한 계획일 때만 '참여 해제' 버튼 표시
-            if (plan['participants'] != null && (plan['participants'] as List).contains(currentUserId))
+            if (plan['participants'] != null &&
+                (plan['participants'] as List).contains(currentUserId))
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
@@ -423,6 +500,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+
+
+
+
 
 
 // 참여 해제 확인 대화상자 UI

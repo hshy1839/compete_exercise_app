@@ -105,6 +105,7 @@ class _MainScreenState extends State<MainScreen> {
             };
           }).toList();
 
+
           exercisePlans = exercisePlans.where((plan) {
             if (plan['userId'] == currentUserId) {
               return true;
@@ -304,7 +305,7 @@ class _MainScreenState extends State<MainScreen> {
                   : ListView.builder(
                 itemCount: exercisePlans.length,
                 itemBuilder: (context, index) {
-                  final plan = exercisePlans[index];
+                  final plan = exercisePlans[exercisePlans.length - 1 - index];
 
                   if (plan['participants'].contains(currentUserId)) {
                     return SizedBox.shrink(); // 아무것도 렌더링하지 않음
@@ -396,8 +397,9 @@ class _MainScreenState extends State<MainScreen> {
                                 Text(
                                   '${plan['nickname']} 님의 계획',
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: Colors.grey,
                                     fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],

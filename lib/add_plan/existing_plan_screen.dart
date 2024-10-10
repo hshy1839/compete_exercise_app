@@ -125,53 +125,90 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
       appBar: AppBar(
         title: Text(''),
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor:  Color(0xFF25c387),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(5.0),
+        padding: const EdgeInsets.all(0.0),
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 날짜 및 D-day 표시
-                Row(
-                  children: [
-                    Text(
-                      '${DateFormat('yyyy.MM.dd').format(selectedDate)}',
-                      style: TextStyle(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.bold), // 날짜 스타일 설정
-                    ),
-                    // D-day 텍스트 표시
-                    SizedBox(height: 10, width: 10,),
-                    Text(
-                      '${dDay > 0 ? 'D-${dDay}' : (dDay == 0 ? '오늘이에요' : '지난 계획입니다.')}',
-                      style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 날짜 및 D-day 표시를 하얀색 배경으로 묶기
+              Container(
+                padding: const EdgeInsets.all(16.0), // 내부 여백 설정
+                decoration: BoxDecoration(
+                  color:  Color(0xFF25c387),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(10.0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5), // 그림자의 색과 투명도 설정
+                      spreadRadius: 5, // 그림자가 퍼지는 정도
+                      blurRadius: 5, // 그림자의 흐림 정도
+                      offset: Offset(0, 3), // 그림자의 위치 (x, y)
                     ),
                   ],
                 ),
-                SizedBox(height: 20,),
-                Text(
-                  '${planDetails!['nickname']} 님의 계획',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+                height: 200,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20,),
+                    // 날짜 및 D-day 표시
+                    Row(
+                      children: [
+                        Text(
+                          '${DateFormat('yyyy.MM.dd').format(selectedDate)}',
+                          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold), // 날짜 스타일 설정
+                        ),
+                        // D-day 텍스트 표시
+                        SizedBox(height: 10, width: 10,),
+                        Text(
+                          '${dDay > 0 ? 'D-${dDay}' : (dDay == 0 ? '오늘이에요' : '지난 계획입니다.')}',
+                          style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 40),
+
+                    // 닉네임 표시
+                    Text(
+                      '${planDetails!['nickname']} 님의 계획',
+                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 50),
-                _buildInfoRow('종류:', planDetails!['selected_exercise']),
-                _buildInfoRow('시간:', '${planDetails!['selected_startTime']} ~ ${planDetails!['selected_endTime']}'),
-                _buildInfoRow('장소:', planDetails!['selected_location']),
-                _buildParticipantsList(),
-              ],
-            ),
+              ),
+
+              SizedBox(height: 20), // 컨테이너 아래 여백
+              // 계획 상세 정보 컨테이너
+              Container(
+                color: Colors.transparent,
+                padding: const EdgeInsets.all(1.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow('종류', planDetails!['selected_exercise'], 0), // 첫 번째 항목, 파란색
+                    _buildInfoRow('시간', '${planDetails!['selected_startTime']} ~ ${planDetails!['selected_endTime']}', 1), // 두 번째 항목, 노란색
+                    _buildInfoRow('장소', planDetails!['selected_location'], 2), // 세 번째 항목, 빨간색
+                  ],
+                ),
+              ),
+
+
+              SizedBox(height: 20), // 컨테이너 아래 여백
+              _buildParticipantsList(),
+            ],
           ),
         ),
       ),
     );
+
   }
 
 
   Widget _buildParticipantsList() {
     if (planDetails!['participants'] == null || planDetails!['participants'].isEmpty) {
-      return _buildInfoRow('참여 인원:', '없음');
+      return _buildInfoRow('참여 인원', '없음', 0);
     }
 
     final isCurrentUserPlan = currentUserNickname == planDetails!['nickname'];
@@ -188,7 +225,13 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(nickname, style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Icon(Icons.person, color: Colors.grey), // 아이콘 추가
+                  SizedBox(width: 8), // 아이콘과 텍스트 간의 간격
+                  Text(nickname, style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold)),
+                ],
+              ),
               if (isCurrentUserPlan)
                 TextButton(
                   onPressed: () => {}, // 삭제 요청 다이얼로그 호출
@@ -201,11 +244,11 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
     }).toList();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('참여 인원:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          Text('참여 인원', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ...participantWidgets, // 참여자 위젯 추가
         ],
       ),
@@ -214,25 +257,49 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
 
 
 
-  Widget _buildInfoRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+  Widget _buildInfoRow(String title, String value, int index) {
+    // index에 따라 순서대로 색상 설정
+    final colors = [Colors.blue, Colors.yellow, Colors.red];
+    final borderColor = colors[index % colors.length]; // 인덱스에 따라 색상 순환
+
+    return Container(
+      width: double.infinity, // 화면에 맞춰 넓이 설정
+      decoration: BoxDecoration(
+        color: Colors.white, // 배경색을 흰색으로 설정
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5), // 그림자의 색과 투명도 설정
+            spreadRadius: 5, // 그림자가 퍼지는 정도
+            blurRadius: 7, // 그림자의 흐림 정도
+            offset: Offset(0, 3), // 그림자의 위치 (x, y)
+          ),
+        ],
+        borderRadius: BorderRadius.circular(5), // 모서리를 둥글게 설정
+        border: Border(
+          left: BorderSide(color: borderColor, width: 5), // 왼쪽 테두리 색상과 너비 설정
+        ),
+      ),
+      padding: const EdgeInsets.all(16.0), // 내부 여백 설정
+      margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20), // 위아래 마진 설정
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: TextStyle(fontSize: 18),
-            ),
+          SizedBox(height: 4.0), // title과 value 사이의 간격
+          Text(
+            value,
+            style: TextStyle(fontSize: 18),
           ),
         ],
       ),
     );
   }
+
+
+
+
 }

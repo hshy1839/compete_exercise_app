@@ -82,6 +82,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         setState(() {
           notifications.clear();
           notifications.addAll(data.map((item) => item as Map<String, dynamic>));
+
         });
         print('받은 알림: ${notifications.length}개');
       }
@@ -109,7 +110,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           : ListView.builder(
         itemCount: notifications.length,
         itemBuilder: (context, index) {
-          final notification = notifications[index];
+          final notification = notifications[notifications.length - 1 - index];
           return GestureDetector(
             onTap: () => _onNotificationTap(notification),
             child: Card(
