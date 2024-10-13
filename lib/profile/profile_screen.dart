@@ -295,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   '내 약속',
                   style: TextStyle(
-                    color: showCreatedPlans ? Colors.blue : Colors.grey,
+                    color: showCreatedPlans ? Color(0xFF25c387) : Colors.grey,
                     fontWeight: FontWeight.bold,// 색상 설정
                     fontSize: 16, // 폰트 크기
                   ),
@@ -311,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   '참여한 약속',
                   style: TextStyle(
-                    color: !showCreatedPlans ? Colors.blue : Colors.grey, // 색상 설정
+                    color: !showCreatedPlans ? Color(0xFF25c387) : Colors.grey, // 색상 설정
                     fontSize: 16, // 폰트 크기
                   ),
                 ),

@@ -278,7 +278,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100, // 전체 배경 색상 설정
+      backgroundColor: Colors.grey.shade100,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0),
         child: Header(),
@@ -286,11 +286,11 @@ class _MainScreenState extends State<MainScreen> {
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: Column(
-          children: [ // Header 위젯 추가
+          children: [
             Expanded(
-              child: isLoading // 로딩 중일 때 처리
+              child: isLoading
                   ? Center(
-                child: CircularProgressIndicator(), // 로딩 인디케이터
+                child: CircularProgressIndicator(),
               )
                   : exercisePlans.where((plan) => !plan['participants'].contains(currentUserId)).isEmpty
                   ? Center(
@@ -308,42 +308,41 @@ class _MainScreenState extends State<MainScreen> {
                   final plan = exercisePlans[exercisePlans.length - 1 - index];
 
                   if (plan['participants'].contains(currentUserId)) {
-                    return SizedBox.shrink(); // 아무것도 렌더링하지 않음
+                    return SizedBox.shrink();
                   }
                   final isCurrentUserPlan = currentUserNickname == plan['nickname'];
 
                   return GestureDetector(
                     onTap: () {
-                      // 운동 계획 ID와 함께 ExistingPlanScreen으로 이동
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => ExistingPlanScreen(
-                            planId: plan['id'], // planId를 전달
-                            nickname: plan['nickname'], // nickname을 전달
+                            planId: plan['id'],
+                            nickname: plan['nickname'],
                           ),
                         ),
                       );
                     },
-                    child: Container( // 원하는 높이로 설정
-                      margin: EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10), // 양쪽 마진 적용
+                    child: Container(
+                      margin: EdgeInsets.only(top: 5, left: 10, right: 10, bottom: 2.5),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border(
                           left: BorderSide(
-                            color: Colors.blue, // 왼쪽 경계선 색상
-                            width: 5, // 경계선 두께
+                            color: Colors.blue,
+                            width: 5,
                           ),
                         ),
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10), // 왼쪽 위 모서리 둥글기
-                          bottomLeft: Radius.circular(10), // 왼쪽 아래 모서리 둥글기
+                          topLeft: Radius.circular(10),
+                          bottomLeft: Radius.circular(10),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.2), // 그림자 색상
-                            spreadRadius: 1, // 그림자 퍼짐 정도
-                            blurRadius: 5, // 그림자 흐림 정도
-                            offset: Offset(0, 3), // 그림자 위치 (아래로 3만큼 이동)
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
                           ),
                         ],
                       ),
@@ -352,7 +351,6 @@ class _MainScreenState extends State<MainScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 날짜와 D-Day 표시
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -364,31 +362,29 @@ class _MainScreenState extends State<MainScreen> {
                                         color: Colors.grey,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                      ), // 날짜 스타일 설정
+                                      ),
                                     ),
-                                    SizedBox(width: 10), // 날짜와 D-Day 사이의 간격
-                                    // D-Day 계산
+                                    SizedBox(width: 10),
                                     Text(
                                       _calculateDDay(plan['selected_date']),
                                       style: TextStyle(
-                                        color: Colors.red, // D-Day 텍스트 색상
+                                        color: Colors.red,
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
                                 ),
-                                // private 아이콘과 텍스트
                                 if (plan['isPrivate'] == true) ...[
                                   Row(
                                     children: [
-                                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                                      SizedBox(width: 5),
                                       Icon(
-                                        Icons.lock, // 자물쇠 아이콘
-                                        color: Colors.green, // 초록색
+                                        Icons.lock,
+                                        color: Colors.green,
                                         size: 15,
                                       ),
-                                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                                      SizedBox(width: 5),
                                       Text(
                                         'private',
                                         style: TextStyle(
@@ -424,40 +420,43 @@ class _MainScreenState extends State<MainScreen> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 10),
-                            Text(
-                              '종류: ${plan['selected_exercise']}',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            Text(
-                              '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            Text(
-                              '장소: ${plan['selected_location']}',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            Text(
-                              '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            SizedBox(height: 10),
+                            SizedBox(height: 20),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.person,
+                                      color: Colors.green,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      ' ${plan['participants'].length} / ${plan['selected_participants']}',
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                  ],
+                                ),
                                 // 본인이 아닌 경우에만 "참여하기" 버튼 표시
                                 if (!isCurrentUserPlan && plan['participants'].length < plan['selected_participants'])
-                                  TextButton(
-                                    onPressed: () => _showParticipationDialog(plan['id']), // 참여 요청 다이얼로그 호출
-                                    child: Text('참여하기', style: TextStyle(color: Colors.blue)),
+                                  IconButton(
+                                    onPressed: () => _showParticipationDialog(plan['id']),
+                                    icon: Icon(
+                                      Icons.exit_to_app,
+                                      color: Colors.blue,
+                                      size: 30,
+                                    ),
                                   ),
                                 if (isCurrentUserPlan)
                                   TextButton(
-                                    onPressed: () => _confirmDelete(plan['id']), // 삭제 요청 다이얼로그 호출
+                                    onPressed: () => _confirmDelete(plan['id']),
                                     child: Text('삭제', style: TextStyle(color: Colors.red)),
                                   ),
                               ],
                             ),
+
                           ],
                         ),
                       ),
@@ -471,6 +470,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+
 
 
 }
