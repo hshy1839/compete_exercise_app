@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../header.dart';
 import '../socket_service.dart';
+import '../add_plan/existing_plan_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -357,149 +358,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Duration difference = selectedDate.difference(today);
     int dDay = difference.inDays; // D-Day 계산
 
-    return Card(
-      color: Colors.white,
-      margin: EdgeInsets.symmetric(vertical: 3.0, horizontal: 20.0),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 날짜와 D-Day를 함께 표시
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '${DateFormat('yyyy.MM.dd').format(selectedDate)}', // 날짜 표시
-                      style: TextStyle(
-                        color: Colors.grey, // 색상 설정
-                        fontSize: 12, // 폰트 크기
-                        fontWeight: FontWeight.bold, // 두껍게 설정
-                      ),
-                    ),
-                    SizedBox(width: 8), // 날짜와 D-Day 간의 간격
-                    Text(
-                      dDay > 0
-                          ? 'D-${dDay}' // D-Day가 양수일 경우
-                          : dDay == 0
-                          ? 'D-Day' // D-Day가 0일 경우
-                          : 'D+${-dDay}', // D-Day 표시
-                      style: TextStyle(
-                        color: Colors.red, // D-Day 텍스트 색상
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                // 비공식적인 계획일 경우 자물쇠 아이콘과 텍스트 표시
-                if (plan['isPrivate'] == true) ...[
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ExistingPlanScreen(
+              planId: plan['id'],
+              nickname: plan['nickname'],
+            ),
+          ),
+        );
+      },
+      child: Card(
+        color: Colors.white,
+        margin: EdgeInsets.symmetric(vertical: 3.0, horizontal: 20.0),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 날짜와 D-Day를 함께 표시
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Row(
                     children: [
-                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
-                      Icon(
-                        Icons.lock, // 자물쇠 아이콘
-                        color: Colors.green, // 초록색
-                        size: 15,
-                      ),
-                      SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
                       Text(
-                        'private',
+                        '${DateFormat('yyyy.MM.dd').format(selectedDate)}', // 날짜 표시
                         style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 15,
+                          color: Colors.grey, // 색상 설정
+                          fontSize: 12, // 폰트 크기
+                          fontWeight: FontWeight.bold, // 두껍게 설정
+                        ),
+                      ),
+                      SizedBox(width: 8), // 날짜와 D-Day 간의 간격
+                      Text(
+                        dDay > 0
+                            ? 'D-${dDay}' // D-Day가 양수일 경우
+                            : dDay == 0
+                            ? 'D-Day' // D-Day가 0일 경우
+                            : 'D+${-dDay}', // D-Day 표시
+                        style: TextStyle(
+                          color: Colors.red, // D-Day 텍스트 색상
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
+                  // 비공식적인 계획일 경우 자물쇠 아이콘과 텍스트 표시
+                  if (plan['isPrivate'] == true) ...[
+                    Row(
+                      children: [
+                        SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                        Icon(
+                          Icons.lock, // 자물쇠 아이콘
+                          color: Colors.green, // 초록색
+                          size: 15,
+                        ),
+                        SizedBox(width: 5), // 아이콘과 텍스트 사이의 간격
+                        Text(
+                          'private',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${plan['planTitle']}',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${plan['nickname']} 님의 계획',
-                  style: TextStyle(
-                    color: Colors.grey, // 회색으로 설정
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 5), // 제목과 다음 텍스트 간격 조절
-            Text(
-              '종류: ${plan['selected_exercise']}',
-              style: TextStyle(fontSize: 14, color: Colors.black),
-            ),
-            SizedBox(height: 5),
-            Text(
-              '시간: ${plan['selected_startTime']} ~ ${plan['selected_endTime']}',
-              style: TextStyle(fontSize: 14, color: Colors.black),
-            ),
-            Text(
-              '위치: ${plan['selected_location']}',
-              style: TextStyle(fontSize: 14, color: Colors.black),
-            ),
-            Text(
-              '참여 인원: ${plan['participants'].length} / ${plan['selected_participants']}',
-              style: TextStyle(fontSize: 14, color: Colors.black),
-            ),
-            SizedBox(height: 10),
-            // 삭제 버튼을 최 우측 하단에 정렬
-            if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
-              Align(
-                alignment: Alignment.bottomRight,
-                child: TextButton(
-                  onPressed: () {
-                    _confirmDelete(plan['id']);
-                  },
-                  child: Text(
-                    '삭제',
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${plan['planTitle']}',
                     style: TextStyle(
-                      color: Colors.red, // 빨간색 글씨
-                      fontSize: 14,
+                      color: Colors.black,
+                      fontSize: 30,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ),
-            // 내가 참여한 계획일 때만 '참여 해제' 버튼 표시
-            if (plan['participants'] != null &&
-                (plan['participants'] as List).contains(currentUserId))
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _showLeaveConfirmationDialog(context, plan['id']);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // 버튼 색상
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+                  Text(
+                    '${plan['nickname']} 님의 계획',
+                    style: TextStyle(
+                      color: Colors.grey, // 회색으로 설정
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Text('참여 해제', style: TextStyle(color: Colors.white)),
-                ),
+                ],
               ),
-          ],
+              SizedBox(height: 5),
+              Icon(Icons.person,
+                color: Colors.green,
+                size: 20,),
+              Text(
+                '${plan['participants'].length} / ${plan['selected_participants']}',
+                style: TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              SizedBox(height: 10),
+              // 삭제 버튼을 최 우측 하단에 정렬
+              if (isCurrentUserPlan) // 현재 사용자의 계획일 때만 삭제 버튼 표시
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: TextButton(
+                    onPressed: () {
+                      _confirmDelete(plan['id']);
+                    },
+                    child: Text(
+                      '삭제',
+                      style: TextStyle(
+                        color: Colors.red, // 빨간색 글씨
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              // 내가 참여한 계획일 때만 '참여 해제' 버튼 표시
+              if (plan['participants'] != null &&
+                  (plan['participants'] as List).contains(currentUserId))
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _showLeaveConfirmationDialog(context, plan['id']);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red, // 버튼 색상
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: Text('참여 해제', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+
 
 
 
