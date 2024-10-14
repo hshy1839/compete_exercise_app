@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../socket_service.dart';
 
 class ExistingPlanScreen extends StatefulWidget {
   final String planId;
@@ -19,6 +20,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
   String? currentUserNickname;
   String? currentUserId;
   Map<String, dynamic>? participantsNicknames;
+  List<String> participantUserId = [];
 
   @override
   void initState() {
@@ -87,16 +89,21 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
           if (response.statusCode == 200) {
             final data = jsonDecode(response.body);
             nicknameMap[userId] = data['nickname'];
+            participantUserId.add(userId);
           } else {
             nicknameMap[userId] = '알 수 없음';
+            participantUserId.add(userId);
           }
         } catch (e) {
           nicknameMap[userId] = '알 수 없음';
+          participantUserId.add(userId);
         }
       }
 
       setState(() {
         participantsNicknames = nicknameMap;
+
+        print(participantUserId);
       });
       print(participantsNicknames);
     }
@@ -205,6 +212,48 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
 
   }
 
+  void _showLeaveConfirmationDialog(BuildContext context, String participantUserId) { // participantUserId 인자로 받음
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('참여 해제'),
+          content: Text('정말로 이 계획에서 참여 해제 하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                _leavePlan(participantUserId); // 선택된 사용자 ID로 퇴장 처리
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _leavePlan(String participantUserId) {
+    // Socket.IO를 통해 참여 해제 요청
+    SocketService().socket.emit('leave_plan', {
+      'userId': participantUserId, // 참가자의 ID를 전달
+      'planId': planDetails!['Id'],
+    });
+
+    // 참여 해제가 성공했을 때 SnackBar 표시
+    _showSnackBar('참여가 해제되었습니다!');
+    setState(() {
+      // 상태를 갱신하여 UI 반영
+      planDetails!['participants'].remove(participantUserId);
+    });
+  }
+
 
   Widget _buildParticipantsList() {
     if (planDetails!['participants'] == null || planDetails!['participants'].isEmpty) {
@@ -234,7 +283,9 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
               ),
               if (isCurrentUserPlan)
                 TextButton(
-                  onPressed: () => {}, // 삭제 요청 다이얼로그 호출
+                  onPressed: () => {
+                  _showLeaveConfirmationDialog(context, id)
+                  }, // 삭제 요청 다이얼로그 호출
                   child: Text('퇴장', style: TextStyle(color: Colors.red)),
                 ),
             ],
@@ -256,6 +307,15 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
   }
 
 
+
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      duration: Duration(seconds: 2),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 
 
   Widget _buildInfoRow(String title, String value, int index) {

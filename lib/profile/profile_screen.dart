@@ -13,13 +13,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _nickname = 'Loading...';
+  String _nickname = '';
   int _postCount = 0; // 게시물 수
   int _followersCount = 0; // 팔로워 수
   int _followingCount = 0; // 팔로잉 수
   List<Map<String, dynamic>> exercisePlans = [];
   String? currentUserId;
   bool showCreatedPlans = true; // true면 내가 만든 기록, false면 내가 참여한 기록
+  bool isLoading = true;
+
 
   @override
   void initState() {
@@ -60,12 +62,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'isPrivate': plan['isPrivate'] ?? '',
             };
           }).toList();
+          isLoading = false;
         });
       } else {
         print('운동 계획을 불러오는 데 실패했습니다. 상태 코드: ${response.statusCode}');
+        isLoading = false;
       }
     } catch (e) {
       print('운동 계획을 가져오는 중 오류 발생: $e');
+      isLoading = false;
     }
   }
 
@@ -179,7 +184,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         preferredSize: Size.fromHeight(60.0),
         child: Header(),
       ),
-      body: Column(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator()) // 로딩 중일 때
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(height: 20),
