@@ -22,7 +22,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.get(
-      Uri.parse('http://43.202.64.70:8864/api/users/search?nickname=$query'),
+      Uri.parse('http://localhost:8864/api/users/search?nickname=$query'),
       headers: {
         'Authorization': 'Bearer $token', // 인증 헤더 추가
       },
@@ -53,8 +53,8 @@ class _SearchScreenState extends State<SearchScreen> {
     // 현재 팔로우 상태에 따라 API 요청 분기
     final isFollowing = _searchResults[index]['isFollowing'];
     final url = isFollowing
-        ? 'http://43.202.64.70:8864/api/users/deletefollow' // 팔로우 취소
-        : 'http://43.202.64.70:8864/api/users/follow'; // 팔로우
+        ? 'http://localhost:8864/api/users/deletefollow' // 팔로우 취소
+        : 'http://localhost:8864/api/users/follow'; // 팔로우
 
     final response = await http.post(
       Uri.parse(url),

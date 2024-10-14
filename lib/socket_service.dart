@@ -10,7 +10,7 @@ class SocketService extends ChangeNotifier {
   }
 
   void _initializeSocket() {
-    socket = IO.io('http://43.202.64.70:8864', IO.OptionBuilder()
+    socket = IO.io('http://localhost:8864', IO.OptionBuilder()
         .setTransports(['websocket'])
         .disableAutoConnect() // 자동 연결 비활성화
         .build());

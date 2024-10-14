@@ -22,14 +22,15 @@ class _MainScreenState extends State<MainScreen> {
   bool isLoading = true;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _fetchUserInfo();
     _fetchExercisePlans(); // 운동 계획 가져오기 호출
     _initializeSocket();
   }
+
   void _initializeSocket() {
-    socket = IO.io('http://43.202.64.70:8864', IO.OptionBuilder()
+    socket = IO.io('http://localhost:8864', IO.OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM
         .disableAutoConnect() // disable automatic connection
         .build());
@@ -50,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
+        Uri.parse('http://localhost:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -78,7 +79,7 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://43.202.64.70:8864/api/users/planinfo'),
+        Uri.parse('http://localhost:8864/api/users/planinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -152,7 +153,7 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       final response = await http.delete(
-        Uri.parse('http://43.202.64.70:8864/api/users/planning/$planId'),
+        Uri.parse('http://localhost:8864/api/users/planning/$planId'),
         headers: {
           'Authorization': 'Bearer $token',
         },

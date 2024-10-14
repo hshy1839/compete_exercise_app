@@ -34,7 +34,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
+        Uri.parse('http://localhost:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },

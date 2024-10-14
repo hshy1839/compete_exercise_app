@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     // 소켓 초기화
-    socket = IO.io('http://43.202.64.70:8864', {
+    socket = IO.io('http://localhost:8864', {
       'transports': ['websocket'],
       'autoConnect': false,
     });
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     // 로그인 요청을 보낼 URL
-    final url = Uri.parse('http://43.202.64.70:8864/api/users/login');
+    final url = Uri.parse('http://localhost:8864/api/users/login');
 
     // POST 요청을 보내기 위한 데이터
     final response = await http.post(

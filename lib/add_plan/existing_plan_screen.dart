@@ -35,7 +35,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://43.202.64.70:8864/api/users/userinfo'),
+        Uri.parse('http://localhost:8864/api/users/userinfo'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -58,7 +58,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
   Future<void> _fetchPlanDetails() async {
     try {
       final response = await http.get(
-        Uri.parse('http://43.202.64.70:8864/api/users/planinfo/${widget.planId}'),
+        Uri.parse('http://localhost:8864/api/users/planinfo/${widget.planId}'),
       );
 
       if (response.statusCode == 200) {
@@ -83,7 +83,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
       for (String userId in participantIds) {
         try {
           final response = await http.get(
-            Uri.parse('http://43.202.64.70:8864/api/users/userinfo/$userId'),
+            Uri.parse('http://localhost:8864/api/users/userinfo/$userId'),
           );
 
           if (response.statusCode == 200) {
@@ -103,7 +103,6 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
       setState(() {
         participantsNicknames = nicknameMap;
 
-        print(participantUserId);
       });
       print(participantsNicknames);
     }
@@ -113,9 +112,6 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
   Widget build(BuildContext context) {
     if (planDetails == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text('운동 계획 세부 정보'),
-        ),
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -129,10 +125,16 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar:AppBar(
         title: Text(''),
         elevation: 0,
-        backgroundColor:  Color(0xFF25c387),
+        backgroundColor: Color(0xFF25c387),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushNamed(context, '/main');
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(0.0),
@@ -212,7 +214,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
 
   }
 
-  void _showLeaveConfirmationDialog(BuildContext context, String participantUserId) { // participantUserId 인자로 받음
+  void _showLeaveConfirmationDialog(BuildContext context, String planId, String userId) { // userId 추가
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -228,7 +230,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
             ),
             TextButton(
               onPressed: () {
-                _leavePlan(participantUserId); // 선택된 사용자 ID로 퇴장 처리
+                _leavePlan(planId, userId); // 선택된 사용자 ID로 퇴장 처리
                 Navigator.of(context).pop(); // 다이얼로그 닫기
               },
               child: Text('확인'),
@@ -239,18 +241,25 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
     );
   }
 
-  void _leavePlan(String participantUserId) {
+  void _leavePlan(String planId, String userId) { // userId 추가
+
+    if (planId == 'null') {
+      _showSnackBar('참여 해제에 실패했습니다: 유효하지 않은 계획입니다.');
+      return;
+    }
+
     // Socket.IO를 통해 참여 해제 요청
     SocketService().socket.emit('leave_plan', {
-      'userId': participantUserId, // 참가자의 ID를 전달
-      'planId': planDetails!['Id'],
+      'userId': userId, // 선택된 참가자의 ID를 전달
+      'planId': planId,
     });
 
     // 참여 해제가 성공했을 때 SnackBar 표시
-    _showSnackBar('참여가 해제되었습니다!');
+
     setState(() {
       // 상태를 갱신하여 UI 반영
-      planDetails!['participants'].remove(participantUserId);
+      planDetails!['participants'].remove(userId); // 해당 사용자 ID만 제거
+      _showSnackBar('참여가 해제되었습니다!');
     });
   }
 
@@ -284,7 +293,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
               if (isCurrentUserPlan)
                 TextButton(
                   onPressed: () => {
-                  _showLeaveConfirmationDialog(context, id)
+                    _showLeaveConfirmationDialog(context, widget.planId, id) // userId를 인자로 넘김
                   }, // 삭제 요청 다이얼로그 호출
                   child: Text('퇴장', style: TextStyle(color: Colors.red)),
                 ),
@@ -293,6 +302,7 @@ class _ExistingPlanScreenState extends State<ExistingPlanScreen> {
         ),
       );
     }).toList();
+
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
